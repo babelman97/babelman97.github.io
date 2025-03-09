@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨機數產生器</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .button {
+            padding: 20px 40px;
+            font-size: 24px;
+            margin-top: 10px;
+            cursor: pointer;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 10px;
+        }
+        .number {
+            font-size: 36px;
+            color: #333;
+            margin-top: 10px;
+        }
+        .input-field {
+            margin: 10px 0;
+            font-size: 18px;
+            padding: 10px;
+            width: 80px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div>最小數字　<input type="number" class="input-field" id="minValue" placeholder="000"></div>
+    <div>最大數字　<input type="number" class="input-field" id="maxValue" placeholder="999"></div>
+    <div>隨機個數　<input type="number" class="input-field" id="count" placeholder="1"></div>
+    <button class="button" onclick="generateRandomNumbers()">產生隨機數</button>
+    <div class="number" id="randomNumbers"></div>
+
+    <script>
+        function generateRandomNumbers() {
+            let minValue = parseInt(document.getElementById('minValue').value);
+            let maxValue = parseInt(document.getElementById('maxValue').value);
+            let count = parseInt(document.getElementById('count').value);
+            let randomNumbers = new Set();
+
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+                return;
+            }
+
+            while (randomNumbers.size < count) {
+                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+                randomNumbers.add(randomNumber);
+            }
+
+            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+        }
+    </script>
+</body>
+</html>
