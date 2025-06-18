@@ -5,80 +5,360 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小六壬占卜計算器</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: 'Microsoft JhengHei', Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 15px;
             line-height: 1.6;
             color: #333;
+            background-color: #f5f5f5;
         }
+        
         h1, h2 {
             color: #2c3e50;
             text-align: center;
+            margin-bottom: 20px;
         }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            font-size: 1.6rem;
+        }
+        
+        .setup-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        
         .result-container {
-            background: #f9f9f9;
-            border-radius: 10px;
+            background: white;
+            border-radius: 12px;
             padding: 20px;
             margin: 20px 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
         .result-row {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
         }
+        
         .result-label {
             font-weight: bold;
             flex: 1;
+            min-width: 0;
         }
+        
         .result-value {
-            flex: 2;
+            flex: 1.5;
             text-align: right;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
+        
         .divination-result {
-            font-size: 24px;
+            font-size: 2rem;
             text-align: center;
-            margin: 20px 0;
+            margin: 25px 0;
             color: #e74c3c;
             font-weight: bold;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+            border-radius: 12px;
+            border: 2px solid #f8d7da;
         }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            min-width: 600px;
         }
+        
         th, td {
-            padding: 8px;
+            padding: 12px 8px;
             text-align: left;
             border: 1px solid #ddd;
         }
+        
         th {
-            background-color: #f2f2f2;
-        }
-        select, button {
-            padding: 8px;
-            margin: 5px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        button {
             background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #e8f4f8;
+        }
+        
+        select, button {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #3498db, #2980b9);
             color: white;
             cursor: pointer;
             border: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
+        
         button:hover {
-            background-color: #2980b9;
+            background: linear-gradient(135deg, #2980b9, #1f5582);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
         .explanation {
-            background-color: #ffffcc;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
+            background: linear-gradient(135deg, #fff9c4, #f4f1b0);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border: 2px solid #f1c40f;
+        }
+        
+        .explanation h2 {
+            color: #f39c12;
+            margin-top: 0;
+        }
+        
+        .explanation h3 {
+            color: #e67e22;
+            border-bottom: 2px solid #f39c12;
+            padding-bottom: 5px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* 平板樣式 */
+        @media (min-width: 768px) {
+            body {
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .setup-container {
+                padding: 30px;
+            }
+            
+            .form-row {
+                display: flex;
+                gap: 20px;
+                align-items: end;
+            }
+            
+            .form-group {
+                flex: 1;
+                margin-bottom: 0;
+            }
+            
+            .result-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .divination-result {
+                font-size: 2.2rem;
+            }
+            
+            select, button {
+                font-size: 16px;
+            }
+        }
+        
+        /* 桌面樣式 */
+        @media (min-width: 1024px) {
+            body {
+                padding: 40px;
+            }
+            
+            h1 {
+                font-size: 3rem;
+            }
+            
+            .setup-container {
+                padding: 40px;
+            }
+            
+            .result-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .divination-result {
+                font-size: 2.5rem;
+                margin: 30px 0;
+            }
+            
+            .explanation {
+                padding: 30px;
+            }
+            
+            table {
+                min-width: auto;
+            }
+        }
+        
+        /* 大螢幕樣式 */
+        @media (min-width: 1200px) {
+            .result-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        /* 小螢幕樣式 */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            h2 {
+                font-size: 1.4rem;
+            }
+            
+            .setup-container, .result-container, .card {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .result-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .result-label, .result-value {
+                text-align: left;
+            }
+            
+            .divination-result {
+                font-size: 1.5rem;
+                padding: 15px;
+            }
+            
+            th, td {
+                padding: 8px 4px;
+                font-size: 14px;
+            }
+            
+            table {
+                min-width: 500px;
+            }
+        }
+        
+        /* 極小螢幕樣式 */
+        @media (max-width: 320px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .divination-result {
+                font-size: 1.2rem;
+            }
+            
+            th, td {
+                padding: 6px 3px;
+                font-size: 12px;
+            }
+        }
+        
+        /* 打印樣式 */
+        @media print {
+            body {
+                background: white;
+                max-width: none;
+                padding: 0;
+            }
+            
+            .setup-container {
+                display: none;
+            }
+            
+            .result-container, .card, .explanation {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+            
+            button {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -86,66 +366,73 @@
     <h1>小六壬占卜計算器</h1>
     
     <div class="setup-container">
-        <div>
-            <label for="timezone-select">選擇時區：</label>
-            <select id="timezone-select">
-                <option value="Asia/Taipei">臺北 (GMT+8)</option>
-                <option value="Asia/Tokyo">東京 (GMT+9)</option>
-                <option value="Asia/Shanghai">上海 (GMT+8)</option>
-                <option value="Asia/Hong_Kong">香港 (GMT+8)</option>
-                <option value="America/New_York">紐約 (GMT-5/GMT-4)</option>
-                <option value="America/Los_Angeles">洛杉磯 (GMT-8/GMT-7)</option>
-                <option value="Europe/London">倫敦 (GMT+0/GMT+1)</option>
-                <option value="Europe/Paris">巴黎 (GMT+1/GMT+2)</option>
-                <option value="Australia/Sydney">雪梨 (GMT+10/GMT+11)</option>
-            </select>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="timezone-select">選擇時區：</label>
+                <select id="timezone-select">
+                    <option value="Asia/Taipei">臺北 (GMT+8)</option>
+                    <option value="Asia/Tokyo">東京 (GMT+9)</option>
+                    <option value="Asia/Shanghai">上海 (GMT+8)</option>
+                    <option value="Asia/Hong_Kong">香港 (GMT+8)</option>
+                    <option value="America/New_York">紐約 (GMT-5/GMT-4)</option>
+                    <option value="America/Los_Angeles">洛杉磯 (GMT-8/GMT-7)</option>
+                    <option value="Europe/London">倫敦 (GMT+0/GMT+1)</option>
+                    <option value="Europe/Paris">巴黎 (GMT+1/GMT+2)</option>
+                    <option value="Australia/Sydney">雪梨 (GMT+10/GMT+11)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="calculation-type">時辰計算方式：</label>
+                <select id="calculation-type">
+                    <option value="東岸及西岸時間">東岸及西岸時間 (子時 23:00-00:59)</option>
+                    <option value="北岸及南岸時間">北岸及南岸時間 (子時 00:00-01:59)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button id="calculate-btn">計算結果</button>
+            </div>
         </div>
-        <div>
-            <label for="calculation-type">時辰計算方式：</label>
-            <select id="calculation-type">
-                <option value="東岸及西岸時間">東岸及西岸時間 (子時 23:00-00:59)</option>
-                <option value="北岸及南岸時間">北岸及南岸時間 (子時 00:00-01:59)</option>
-            </select>
-        </div>
-        <button id="calculate-btn">計算結果</button>
     </div>
     
     <div class="result-container" id="results">
-        <div class="result-row">
-            <span class="result-label">時區設定：</span>
-            <span class="result-value" id="timezone-display"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">當前時間：</span>
-            <span class="result-value" id="current-time"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">農曆日期：</span>
-            <span class="result-value" id="lunar-date"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">農曆月份數值：</span>
-            <span class="result-value" id="lunar-month"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">農曆日數值：</span>
-            <span class="result-value" id="lunar-day"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">計算方式：</span>
-            <span class="result-value" id="calculation-type-display"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">當前時辰：</span>
-            <span class="result-value" id="current-time-branch"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">時辰數字：</span>
-            <span class="result-value" id="time-branch-number"></span>
-        </div>
-        <div class="result-row">
-            <span class="result-label">小六壬數：</span>
-            <span class="result-value" id="xiaoluiren-number"></span>
+        <div class="result-grid">
+            <div class="result-row">
+                <span class="result-label">時區設定</span>
+                <span class="result-value" id="timezone-display"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">當前時間</span>
+                <span class="result-value" id="current-time"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">農曆日期</span>
+                <span class="result-value" id="lunar-date"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">農曆月份數值</span>
+                <span class="result-value" id="lunar-month"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">農曆日數值</span>
+                <span class="result-value" id="lunar-day"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">計算方式</span>
+                <span class="result-value" id="calculation-type-display"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">當前時辰</span>
+                <span class="result-value" id="current-time-branch"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">時辰數字</span>
+                <span class="result-value" id="time-branch-number"></span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">小六壬數</span>
+                <span class="result-value" id="xiaoluiren-number"></span>
+            </div>
         </div>
         <div class="divination-result" id="divination-result"></div>
     </div>
@@ -157,55 +444,59 @@
         <p>若能被 6 整除，則餘數為 6。</p>
         
         <h3>小六壬占卜結果對照表：</h3>
-        <table>
-            <tr>
-                <th>餘數</th>
-                <th>占卜結果</th>
-                <th>寓意</th>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>大安</td>
-                <td>萬事大吉，諸事順遂</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>留連</td>
-                <td>徘徊不定，拖延狀態</td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>速喜</td>
-                <td>好消息即將到來</td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td>赤口</td>
-                <td>口舌是非，小有不順</td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td>小吉</td>
-                <td>小有吉利，平安順遂</td>
-            </tr>
-            <tr>
-                <td>6</td>
-                <td>空亡</td>
-                <td>虛無飄渺，事難成就</td>
-            </tr>
-        </table>
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>餘數</th>
+                    <th>占卜結果</th>
+                    <th>寓意</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td>大安</td>
+                    <td>萬事大吉，諸事順遂</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>留連</td>
+                    <td>徘徊不定，拖延狀態</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>速喜</td>
+                    <td>好消息即將到來</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td>赤口</td>
+                    <td>口舌是非，小有不順</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td>小吉</td>
+                    <td>小有吉利，平安順遂</td>
+                </tr>
+                <tr>
+                    <td>6</td>
+                    <td>空亡</td>
+                    <td>虛無飄渺，事難成就</td>
+                </tr>
+            </table>
+        </div>
     </div>
     
-    <div>
+    <div class="card">
         <h2>地支時辰對照表</h2>
-        <table id="time-branch-table">
-            <tr>
-                <th>時間</th>
-                <th>地支時辰</th>
-                <th>時辰數字</th>
-            </tr>
-            <!-- 動態生成時辰對照表 -->
-        </table>
+        <div class="table-container">
+            <table id="time-branch-table">
+                <tr>
+                    <th>時間</th>
+                    <th>地支時辰</th>
+                    <th>時辰數字</th>
+                </tr>
+                <!-- 動態生成時辰對照表 -->
+            </table>
+        </div>
     </div>
 
     <script>
