@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小六壬占卜計算器</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .result-container {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .result-label {
+            font-weight: bold;
+            flex: 1;
+        }
+        .result-value {
+            flex: 2;
+            text-align: right;
+        }
+        .divination-result {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        select, button {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .explanation {
+            background-color: #ffffcc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>小六壬占卜計算器</h1>
+    
+    <div class="setup-container">
+        <div>
+            <label for="timezone-select">選擇時區：</label>
+            <select id="timezone-select">
+                <option value="Asia/Taipei">臺北 (GMT+8)</option>
+                <option value="Asia/Tokyo">東京 (GMT+9)</option>
+                <option value="Asia/Shanghai">上海 (GMT+8)</option>
+                <option value="Asia/Hong_Kong">香港 (GMT+8)</option>
+                <option value="America/New_York">紐約 (GMT-5/GMT-4)</option>
+                <option value="America/Los_Angeles">洛杉磯 (GMT-8/GMT-7)</option>
+                <option value="Europe/London">倫敦 (GMT+0/GMT+1)</option>
+                <option value="Europe/Paris">巴黎 (GMT+1/GMT+2)</option>
+                <option value="Australia/Sydney">雪梨 (GMT+10/GMT+11)</option>
+            </select>
+        </div>
+        <div>
+            <label for="calculation-type">時辰計算方式：</label>
+            <select id="calculation-type">
+                <option value="東岸及西岸時間">東岸及西岸時間 (子時 23:00-00:59)</option>
+                <option value="北岸及南岸時間">北岸及南岸時間 (子時 00:00-01:59)</option>
+            </select>
+        </div>
+        <button id="calculate-btn">計算結果</button>
+    </div>
+    
+    <div class="result-container" id="results">
+        <div class="result-row">
+            <span class="result-label">時區設定：</span>
+            <span class="result-value" id="timezone-display"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">當前時間：</span>
+            <span class="result-value" id="current-time"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">農曆日期：</span>
+            <span class="result-value" id="lunar-date"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">農曆月份數值：</span>
+            <span class="result-value" id="lunar-month"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">農曆日數值：</span>
+            <span class="result-value" id="lunar-day"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">計算方式：</span>
+            <span class="result-value" id="calculation-type-display"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">當前時辰：</span>
+            <span class="result-value" id="current-time-branch"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">時辰數字：</span>
+            <span class="result-value" id="time-branch-number"></span>
+        </div>
+        <div class="result-row">
+            <span class="result-label">小六壬數：</span>
+            <span class="result-value" id="xiaoluiren-number"></span>
+        </div>
+        <div class="divination-result" id="divination-result"></div>
+    </div>
+    
+    <div class="explanation">
+        <h2>小六壬占卜計算方式</h2>
+        <p>小六壬數 = 農曆月數 + 農曆日數 + 時辰數字</p>
+        <p>將結果對 6 取餘數，得到 1-6 之間的數字，對應不同的占卜結果。</p>
+        <p>若能被 6 整除，則餘數為 6。</p>
+        
+        <h3>小六壬占卜結果對照表：</h3>
+        <table>
+            <tr>
+                <th>餘數</th>
+                <th>占卜結果</th>
+                <th>寓意</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>大安</td>
+                <td>萬事大吉，諸事順遂</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>留連</td>
+                <td>徘徊不定，拖延狀態</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>速喜</td>
+                <td>好消息即將到來</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>赤口</td>
+                <td>口舌是非，小有不順</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>小吉</td>
+                <td>小有吉利，平安順遂</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>空亡</td>
+                <td>虛無飄渺，事難成就</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div>
+        <h2>地支時辰對照表</h2>
+        <table id="time-branch-table">
+            <tr>
+                <th>時間</th>
+                <th>地支時辰</th>
+                <th>時辰數字</th>
+            </tr>
+            <!-- 動態生成時辰對照表 -->
+        </table>
+    </div>
+
+    <script>
+        // 定義日期相關函數的命名空間
+        const LunarCalendar = {
+            // 月份天數資料
+            lunarInfo: [
+                0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+                0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+                0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+                0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+                0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
+                0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5d0, 0x14573, 0x052d0, 0x0a9a8, 0x0e950, 0x06aa0,
+                0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
+                0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b5a0, 0x195a6,
+                0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
+                0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
+                0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
+                0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+                0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
+                0x05aa0, 0x076a3, 0x096d0, 0x04bd7, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
+                0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0
+            ],
+
+            // 返回農曆 y 年的總天數
+            yearDays: function(y) {
+                let i, sum = 348;
+                for (i = 0x8000; i > 0x8; i >>= 1) {
+                    sum += (this.lunarInfo[y - 1900] & i) ? 1 : 0;
+                }
+                return sum + this.leapDays(y);
+            },
+
+            // 返回農曆 y 年閏月的天數
+            leapDays: function(y) {
+                if (this.leapMonth(y)) {
+                    return (this.lunarInfo[y - 1900] & 0x10000) ? 30 : 29;
+                }
+                return 0;
+            },
+
+            // 返回農曆 y 年閏月是哪個月，沒閏返回 0
+            leapMonth: function(y) {
+                return this.lunarInfo[y - 1900] & 0xf;
+            },
+
+            // 返回農曆 y 年 m 月的總天數
+            monthDays: function(y, m) {
+                return (this.lunarInfo[y - 1900] & (0x10000 >> m)) ? 30 : 29;
+            },
+
+            // 算出農曆，傳入日期對象，返回農曆日期（年月日）
+            solar2lunar: function(date) {
+                let leap = 0, temp = 0;
+                let lunarYear, lunarMonth, lunarDay;
+                let offset = (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(1900, 0, 31)) / 86400000;
+
+                for (lunarYear = 1900; lunarYear < 2101 && offset > 0; lunarYear++) {
+                    temp = this.yearDays(lunarYear);
+                    offset -= temp;
+                }
+
+                if (offset < 0) {
+                    offset += temp;
+                    lunarYear--;
+                }
+
+                // 計算閏月
+                let leapMonth = this.leapMonth(lunarYear);
+                let isLeap = false;
+
+                // 計算月
+                for (lunarMonth = 1; lunarMonth < 13 && offset > 0; lunarMonth++) {
+                    // 閏月
+                    if (leapMonth > 0 && lunarMonth === (leapMonth + 1) && !isLeap) {
+                        --lunarMonth;
+                        isLeap = true;
+                        temp = this.leapDays(lunarYear);
+                    } else {
+                        temp = this.monthDays(lunarYear, lunarMonth);
+                    }
+
+                    // 解除閏月
+                    if (isLeap && lunarMonth === (leapMonth + 1)) isLeap = false;
+
+                    offset -= temp;
+                }
+
+                if (offset === 0 && leapMonth > 0 && lunarMonth === leapMonth + 1) {
+                    if (isLeap) {
+                        isLeap = false;
+                    } else {
+                        isLeap = true;
+                        --lunarMonth;
+                    }
+                }
+
+                if (offset < 0) {
+                    offset += temp;
+                    --lunarMonth;
+                }
+
+                // 計算日
+                lunarDay = offset + 1;
+
+                // 返回結果
+                return {
+                    lunarYear: lunarYear,
+                    lunarMonth: lunarMonth,
+                    lunarDay: lunarDay,
+                    isLeap: isLeap
+                };
+            },
+
+            // 格式化農曆日期顯示
+            formatLunar: function(lunar) {
+                const monthNames = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "冬", "臘"];
+                const dayNames = ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+                                 "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+                                 "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"];
+                
+                let result = '';
+                result += (lunar.isLeap ? '閏' : '') + monthNames[lunar.lunarMonth - 1] + '月';
+                result += dayNames[lunar.lunarDay - 1];
+                
+                return result;
+            }
+        };
+
+        // 獲取時辰信息
+        function getChineseTimeInfo(hour, timeZone = "東岸及西岸時間") {
+            let chineseHours;
+            
+            if (timeZone === "東岸及西岸時間") {
+                // 東岸及西岸時間的地支時辰對照表
+                chineseHours = {
+                    23: ["子時 (23:00-00:59) - 夜半", 1],
+                    0: ["子時 (23:00-00:59) - 夜半", 1],
+                    1: ["丑時 (01:00-02:59) - 雞鳴", 2],
+                    2: ["丑時 (01:00-02:59) - 雞鳴", 2],
+                    3: ["寅時 (03:00-04:59) - 平旦", 3],
+                    4: ["寅時 (03:00-04:59) - 平旦", 3],
+                    5: ["卯時 (05:00-06:59) - 日出", 4],
+                    6: ["卯時 (05:00-06:59) - 日出", 4],
+                    7: ["辰時 (07:00-08:59) - 食時", 5],
+                    8: ["辰時 (07:00-08:59) - 食時", 5],
+                    9: ["巳時 (09:00-10:59) - 隅中", 6],
+                    10: ["巳時 (09:00-10:59) - 隅中", 6],
+                    11: ["午時 (11:00-12:59) - 日中", 7],
+                    12: ["午時 (11:00-12:59) - 日中", 7],
+                    13: ["未時 (13:00-14:59) - 日昳", 8],
+                    14: ["未時 (13:00-14:59) - 日昳", 8],
+                    15: ["申時 (15:00-16:59) - 哺時", 9],
+                    16: ["申時 (15:00-16:59) - 哺時", 9],
+                    17: ["酉時 (17:00-18:59) - 日入", 10],
+                    18: ["酉時 (17:00-18:59) - 日入", 10],
+                    19: ["戌時 (19:00-20:59) - 黃昏", 11],
+                    20: ["戌時 (19:00-20:59) - 黃昏", 11],
+                    21: ["亥時 (21:00-22:59) - 人定", 12],
+                    22: ["亥時 (21:00-22:59) - 人定", 12]
+                };
+            } else {
+                // 北岸及南岸時間的地支時辰對照表
+                chineseHours = {
+                    0: ["子時 (00:00-01:59) - 夜半", 1],
+                    1: ["子時 (00:00-01:59) - 夜半", 1],
+                    2: ["丑時 (02:00-03:59) - 雞鳴", 2],
+                    3: ["丑時 (02:00-03:59) - 雞鳴", 2],
+                    4: ["寅時 (04:00-05:59) - 平旦", 3],
+                    5: ["寅時 (04:00-05:59) - 平旦", 3],
+                    6: ["卯時 (06:00-07:59) - 日出", 4],
+                    7: ["卯時 (06:00-07:59) - 日出", 4],
+                    8: ["辰時 (08:00-09:59) - 食時", 5],
+                    9: ["辰時 (08:00-09:59) - 食時", 5],
+                    10: ["巳時 (10:00-11:59) - 隅中", 6],
+                    11: ["巳時 (10:00-11:59) - 隅中", 6],
+                    12: ["午時 (12:00-13:59) - 日中", 7],
+                    13: ["午時 (12:00-13:59) - 日中", 7],
+                    14: ["未時 (14:00-15:59) - 日昳", 8],
+                    15: ["未時 (14:00-15:59) - 日昳", 8],
+                    16: ["申時 (16:00-17:59) - 哺時", 9],
+                    17: ["申時 (16:00-17:59) - 哺時", 9],
+                    18: ["酉時 (18:00-19:59) - 日入", 10],
+                    19: ["酉時 (18:00-19:59) - 日入", 10],
+                    20: ["戌時 (20:00-21:59) - 黃昏", 11],
+                    21: ["戌時 (20:00-21:59) - 黃昏", 11],
+                    22: ["亥時 (22:00-23:59) - 人定", 12],
+                    23: ["亥時 (22:00-23:59) - 人定", 12]
+                };
+            }
+            
+            return chineseHours[hour] || ["未知時辰", 0];
+        }
+
+        // 獲取時區時間
+        function getTimezoneTime(timezoneStr) {
+            const now = new Date();
+            
+            // 移除標準時間信息，僅保留日期
+            const dateStr = now.toLocaleString('en-US', { timeZone: timezoneStr });
+            return new Date(dateStr);
+        }
+
+        // 獲取小六壬結果
+        function getXiaoluirenResult(xiaoluirenNum) {
+            // 小六壬數對6取餘數，得到1-6之間的數
+            let remainder = xiaoluirenNum % 6;
+            
+            // 如果餘數為0，表示能被6整除，對應餘數6
+            if (remainder === 0) {
+                remainder = 6;
+            }
+            
+            // 對應的占卜結果
+            const divinationResults = {
+                1: "大安",
+                2: "留連",
+                3: "速喜",
+                4: "赤口",
+                5: "小吉",
+                6: "空亡"
+            };
+            
+            return divinationResults[remainder] || "未知";
+        }
+
+        // 生成時辰對照表
+        function generateTimeBranchTable(calculationType) {
+            const table = document.getElementById('time-branch-table');
+            // 清空表格內容，保留表頭
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+            
+            // 如果表格沒有表頭，添加表頭
+            if (table.rows.length === 0) {
+                const header = table.createTHead();
+                const headerRow = header.insertRow();
+                const headers = ["時間", "地支時辰", "時辰數字"];
+                
+                headers.forEach(headerText => {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    headerRow.appendChild(th);
+                });
+            }
+            
+            // 填充表格內容
+            for (let hour = 0; hour < 24; hour++) {
+                const [timeDesc, hourCount] = getChineseTimeInfo(hour, calculationType);
+                
+                const row = table.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                
+                cell1.textContent = `${hour.toString().padStart(2, '0')}:00 - ${hour.toString().padStart(2, '0')}:59`;
+                cell2.textContent = timeDesc;
+                cell3.textContent = hourCount;
+            }
+        }
+
+        // 計算並顯示結果
+        function calculateResults() {
+            const timezoneSelect = document.getElementById('timezone-select');
+            const calculationTypeSelect = document.getElementById('calculation-type');
+            
+            const selectedTimezone = timezoneSelect.value;
+            const selectedCalculationType = calculationTypeSelect.value;
+            
+            // 獲取指定時區的時間
+            const now = getTimezoneTime(selectedTimezone);
+            const currentHour = now.getHours();
+            
+            // 獲取當前時辰信息
+            const [currentTimeDesc, chineseHoursCount] = getChineseTimeInfo(currentHour, selectedCalculationType);
+            
+            // 獲取農曆日期
+            const lunarDate = LunarCalendar.solar2lunar(now);
+            const lunarDateStr = LunarCalendar.formatLunar(lunarDate);
+            const chineseMonth = lunarDate.lunarMonth;
+            const chineseDay = lunarDate.lunarDay;
+            
+            // 計算小六壬數
+            const xiaoluirenNum = chineseMonth + chineseDay + chineseHoursCount;
+            
+            // 獲取小六壬占卜結果
+            const divinationResult = getXiaoluirenResult(xiaoluirenNum);
+            
+            // 更新頁面顯示
+            document.getElementById('timezone-display').textContent = `${selectedTimezone} (GMT${now.toString().match(/GMT([+-]\d+)/)[1]})`;
+            document.getElementById('current-time').textContent = now.toLocaleString();
+            document.getElementById('lunar-date').textContent = `${lunarDateStr} (農曆${lunarDate.lunarYear}年${lunarDate.isLeap ? '閏' : ''}${lunarDate.lunarMonth}月${lunarDate.lunarDay}日)`;
+            document.getElementById('lunar-month').textContent = chineseMonth;
+            document.getElementById('lunar-day').textContent = chineseDay;
+            document.getElementById('calculation-type-display').textContent = selectedCalculationType;
+            document.getElementById('current-time-branch').textContent = currentTimeDesc;
+            document.getElementById('time-branch-number').textContent = chineseHoursCount;
+            document.getElementById('xiaoluiren-number').textContent = xiaoluirenNum;
+            document.getElementById('divination-result').textContent = `占卜結果：${divinationResult}`;
+            
+            // 生成時辰對照表
+            generateTimeBranchTable(selectedCalculationType);
+        }
+
+        // 綁定按鈕點擊事件
+        document.getElementById('calculate-btn').addEventListener('click', calculateResults);
+        
+        // 頁面加載時自動計算一次
+        window.onload = function() {
+            calculateResults();
+        };
+    </script>
+</body>
+</html>
