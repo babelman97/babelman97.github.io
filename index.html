@@ -3,69 +3,550 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>隨機數產生器</title>
+    <title>人生明燈</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
-        .button {
-            padding: 20px 40px;
-            font-size: 24px;
-            margin-top: 10px;
-            cursor: pointer;
-            border: none;
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 10px;
-        }
-        .number {
-            font-size: 36px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             color: #333;
-            margin-top: 10px;
         }
-        .input-field {
-            margin: 10px 0;
-            font-size: 18px;
-            padding: 10px;
-            width: 80px;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
             text-align: center;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .service-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .service-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .service-content {
+            margin-top: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: none;
+        }
+
+        .weather-info {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .temp {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 60px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+        }
+
+        .quick-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quick-tool {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-tool:hover {
+            transform: scale(1.05);
+            background: rgba(255,255,255,1);
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .service-card {
+                padding: 20px;
+            }
+            
+            .quick-tools {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quick-tools {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div>最小數字　<input type="number" class="input-field" id="minValue" placeholder="000"></div>
-    <div>最大數字　<input type="number" class="input-field" id="maxValue" placeholder="999"></div>
-    <div>隨機個數　<input type="number" class="input-field" id="count" placeholder="1"></div>
-    <button class="button" onclick="generateRandomNumbers()">產生隨機數</button>
-    <div class="number" id="randomNumbers"></div>
+    <div class="container">
+        <header>
+            <h1>🌟 人生明燈</h1>
+            <p class="subtitle">您的日常工具集合站</p>
+        </header>
+
+        <div class="services-grid">
+            <!-- 隨機產生器 -->
+			<div class="service-card">
+                <div class="service-icon"><a href="https://babelman97.gihub.io/">🎲</a></div>
+                <div class="service-title">隨機產生器</div>
+                <div class="service-description">簡單便利隨機號碼</div>
+                <div class="service-content">
+                    
+                </div>
+            </div>
+			
+            <!-- 密碼生成器 -->
+			<div class="service-card">
+                <div class="service-icon">🔐</div>
+                <div class="service-title">密碼生成器</div>
+                <div class="service-description">生成安全可靠的隨機密碼</div>
+                <div class="service-content">
+                    <div class="input-group">
+                        <input type="number" id="passwordLength" value="12" min="4" max="50" placeholder="密碼長度">
+                    </div>
+                    <button onclick="generatePassword()">生成密碼</button>
+                    <div id="passwordResult" class="result"></div>
+                </div>
+            </div>
+
+            <!-- 顏色工具 -->
+            <div class="service-card">
+                <div class="service-icon">🎨</div>
+                <div class="service-title">顏色工具</div>
+                <div class="service-description">顏色轉換和隨機顏色生成</div>
+                <div class="service-content">
+                    <div class="input-group">
+                        <input type="color" id="colorPicker" value="#667eea">
+                    </div>
+                    <div class="color-preview" id="colorPreview"></div>
+                    <button onclick="generateRandomColor()">隨機顏色</button>
+                    <div id="colorResult" class="result"></div>
+                </div>
+            </div>
+
+            <!-- 文字工具 -->
+            <div class="service-card">
+                <div class="service-icon">📝</div>
+                <div class="service-title">文字工具</div>
+                <div class="service-description">文字統計和格式處理</div>
+                <div class="service-content">
+                    <div class="input-group">
+                        <textarea id="textInput" rows="4" placeholder="輸入您的文字..."></textarea>
+                    </div>
+                    <button onclick="analyzeText()">分析文字</button>
+                    <div id="textResult" class="result"></div>
+                </div>
+            </div>
+
+            <!-- QR Code 生成器 -->
+            <div class="service-card">
+                <div class="service-icon">📱</div>
+                <div class="service-title">QR Code 生成</div>
+                <div class="service-description">將文字或網址轉為 QR Code</div>
+                <div class="service-content">
+                    <div class="input-group">
+                        <input type="text" id="qrInput" placeholder="輸入文字或網址">
+                    </div>
+                    <button onclick="generateQR()">生成 QR Code</button>
+                    <div id="qrResult" class="result"></div>
+                </div>
+            </div>
+
+            <!-- 單位轉換 -->
+            <div class="service-card">
+                <div class="service-icon">⚖️</div>
+                <div class="service-title">單位轉換</div>
+                <div class="service-description">常用單位快速轉換</div>
+                <div class="service-content">
+                    <div class="input-group">
+                        <input type="number" id="convertValue" placeholder="輸入數值">
+                    </div>
+                    <div class="input-group">
+                        <select id="convertType">
+                            <option value="temp">溫度轉換 (°C ↔ °F)</option>
+                            <option value="length">長度轉換 (cm ↔ inch)</option>
+                            <option value="weight">重量轉換 (kg ↔ lb)</option>
+                        </select>
+                    </div>
+                    <button onclick="convertUnit()">轉換</button>
+                    <div id="convertResult" class="result"></div>
+                </div>
+            </div>
+
+            <!-- 時間工具 -->
+            <div class="service-card">
+                <div class="service-icon">⏰</div>
+                <div class="service-title">時間工具</div>
+                <div class="service-description">時區轉換和時間計算</div>
+                <div class="service-content">
+                    <div class="weather-info">
+                        <div id="currentTime"></div>
+                        <div id="timeZones"></div>
+                    </div>
+                    <button onclick="updateTime()">更新時間</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 快捷工具 -->
+        <div class="service-card">
+            <div class="service-title">快捷工具</div>
+            <div class="quick-tools">
+                <div class="quick-tool" onclick="copyToClipboard(window.location.href)">
+                    📋<br>複製網址
+                </div>
+                <div class="quick-tool" onclick="fullscreen()">
+                    🖥️<br>全螢幕
+                </div>
+                <div class="quick-tool" onclick="printPage()">
+                    🖨️<br>列印頁面
+                </div>
+                <div class="quick-tool" onclick="clearAll()">
+                    🗑️<br>清空所有
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>&copy; 2025 人生明燈 - 指引人生方向</p>
+        </footer>
+    </div>
 
     <script>
-        function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+        // 密碼生成器
+        function generatePassword() {
+            const length = parseInt(document.getElementById('passwordLength').value);
+            const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+            let password = '';
+            
+            for (let i = 0; i < length; i++) {
+                password += charset.charAt(Math.floor(Math.random() * charset.length));
+            }
+            
+            const result = document.getElementById('passwordResult');
+            result.innerHTML = `<strong>生成的密碼：</strong><br><code style="font-size: 1.1em; background: #e9ecef; padding: 5px; border-radius: 5px;">${password}</code>
+                               <br><button onclick="copyToClipboard('${password}')" style="margin-top: 10px; width: auto; padding: 8px 16px;">複製密碼</button>`;
+            result.style.display = 'block';
+        }
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+        // 顏色工具
+        function updateColorPreview() {
+            const color = document.getElementById('colorPicker').value;
+            const preview = document.getElementById('colorPreview');
+            preview.style.backgroundColor = color;
+            
+            const result = document.getElementById('colorResult');
+            const rgb = hexToRgb(color);
+            result.innerHTML = `
+                <strong>顏色資訊：</strong><br>
+                HEX: ${color.toUpperCase()}<br>
+                RGB: ${rgb.r}, ${rgb.g}, ${rgb.b}<br>
+                HSL: ${rgbToHsl(rgb.r, rgb.g, rgb.b)}
+            `;
+            result.style.display = 'block';
+        }
+
+        function generateRandomColor() {
+            const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
+            document.getElementById('colorPicker').value = randomColor;
+            updateColorPreview();
+        }
+
+        document.getElementById('colorPicker').addEventListener('change', updateColorPreview);
+
+        // 文字分析
+        function analyzeText() {
+            const text = document.getElementById('textInput').value;
+            const wordCount = text.trim().split(/\s+/).filter(word => word.length > 0).length;
+            const charCount = text.length;
+            const charCountNoSpaces = text.replace(/\s/g, '').length;
+            const lineCount = text.split('\n').length;
+            
+            const result = document.getElementById('textResult');
+            result.innerHTML = `
+                <strong>文字統計：</strong><br>
+                字符數（含空格）: ${charCount}<br>
+                字符數（不含空格）: ${charCountNoSpaces}<br>
+                詞數: ${wordCount}<br>
+                行數: ${lineCount}
+            `;
+            result.style.display = 'block';
+        }
+
+        // QR Code 生成（簡化版本）
+        function generateQR() {
+            const text = document.getElementById('qrInput').value;
+            if (!text.trim()) {
+                alert('請輸入要生成 QR Code 的內容');
                 return;
             }
-
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
-            }
-
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            
+            const result = document.getElementById('qrResult');
+            result.innerHTML = `
+                <strong>QR Code 已生成：</strong><br>
+                <div style="text-align: center; margin: 15px 0;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}" 
+                         alt="QR Code" style="max-width: 100%; border-radius: 10px;">
+                </div>
+                <small>內容: ${text}</small>
+            `;
+            result.style.display = 'block';
         }
+
+        // 單位轉換
+        function convertUnit() {
+            const value = parseFloat(document.getElementById('convertValue').value);
+            const type = document.getElementById('convertType').value;
+            
+            if (isNaN(value)) {
+                alert('請輸入有效的數值');
+                return;
+            }
+            
+            let result = '';
+            let converted = 0;
+            
+            switch(type) {
+                case 'temp':
+                    converted = (value * 9/5) + 32;
+                    result = `${value}°C = ${converted.toFixed(2)}°F<br>${value}°F = ${((value - 32) * 5/9).toFixed(2)}°C`;
+                    break;
+                case 'length':
+                    converted = value * 0.393701;
+                    result = `${value} cm = ${converted.toFixed(2)} inches<br>${value} inches = ${(value * 2.54).toFixed(2)} cm`;
+                    break;
+                case 'weight':
+                    converted = value * 2.20462;
+                    result = `${value} kg = ${converted.toFixed(2)} lbs<br>${value} lbs = ${(value * 0.453592).toFixed(2)} kg`;
+                    break;
+            }
+            
+            const resultDiv = document.getElementById('convertResult');
+            resultDiv.innerHTML = `<strong>轉換結果：</strong><br>${result}`;
+            resultDiv.style.display = 'block';
+        }
+
+        // 時間工具
+        function updateTime() {
+            const now = new Date();
+            const timeDiv = document.getElementById('currentTime');
+            const timeZonesDiv = document.getElementById('timeZones');
+            
+            timeDiv.innerHTML = `
+                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
+                <div>${now.toLocaleDateString('zh-TW', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    weekday: 'long'
+                })}</div>
+            `;
+            
+            timeZonesDiv.innerHTML = `
+                <small>
+                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
+                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
+                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
+                </small>
+            `;
+        }
+
+        // 實用函數
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            
+            return `${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%`;
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已複製到剪貼簿！');
+            }).catch(() => {
+                alert('複製失敗，請手動複製');
+            });
+        }
+
+        function fullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
+        function printPage() {
+            window.print();
+        }
+
+        function clearAll() {
+            if (confirm('確定要清空所有輸入內容嗎？')) {
+                document.querySelectorAll('input, textarea').forEach(el => {
+                    if (el.type !== 'color') el.value = '';
+                });
+                document.querySelectorall('.result').forEach(el => {
+                    el.style.display = 'none';
+                });
+            }
+        }
+
+        // 初始化
+        updateTime();
+        updateColorPreview();
+        setInterval(updateTime, 1000);
     </script>
 </body>
 </html>
