@@ -307,6 +307,29 @@
         const gridSize = 20;
         const tileCount = canvas.width / gridSize;
 
+        // 效能優化：預先渲染網格到離屏畫布
+        const gridCanvas = document.createElement('canvas');
+        gridCanvas.width = canvas.width;
+        gridCanvas.height = canvas.height;
+        const gridCtx = gridCanvas.getContext('2d');
+
+        function preRenderGrid() {
+            gridCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            gridCtx.lineWidth = 1;
+            for (let i = 0; i <= tileCount; i++) {
+                gridCtx.beginPath();
+                gridCtx.moveTo(i * gridSize, 0);
+                gridCtx.lineTo(i * gridSize, gridCanvas.height);
+                gridCtx.stroke();
+
+                gridCtx.beginPath();
+                gridCtx.moveTo(0, i * gridSize);
+                gridCtx.lineTo(gridCanvas.width, i * gridSize);
+                gridCtx.stroke();
+            }
+        }
+        preRenderGrid();
+
         let snake = [
             {x: 10, y: 10}
         ];
@@ -322,6 +345,9 @@
         let obstacles = [];
         let speedBoost = false;
         let speedBoostTimer = 0;
+
+        // 效能優化：緩存常用的 DOM 元素
+        const gameContainer = document.querySelector('.game-container');
 
         // 遊戲模式設定
         const gameModes = {
@@ -418,20 +444,8 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 繪制網格
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * gridSize, 0);
-                ctx.lineTo(i * gridSize, canvas.height);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(0, i * gridSize);
-                ctx.lineTo(canvas.width, i * gridSize);
-                ctx.stroke();
-            }
+            // 繪制網格 (效能優化：使用預先渲染的離屏畫布)
+            ctx.drawImage(gridCanvas, 0, 0);
 
             // 繪制蛇
             snake.forEach((segment, index) => {
@@ -592,7 +606,7 @@
             updateDisplay();
         }
 
-        // 創建粒子效果
+        // 創建粒子效果 (效能優化：緩存 DOM 查詢)
         function createParticleEffect(x, y) {
             for (let i = 0; i < 10; i++) {
                 const particle = document.createElement('div');
@@ -600,7 +614,7 @@
                 particle.style.left = x + 'px';
                 particle.style.top = y + 'px';
                 particle.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
-                document.querySelector('.game-container').appendChild(particle);
+                gameContainer.appendChild(particle);
                 
                 setTimeout(() => {
                     particle.remove();
