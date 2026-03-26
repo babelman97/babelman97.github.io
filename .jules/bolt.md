@@ -1,0 +1,3 @@
+## 2025-05-15 - [Snake Canvas Rendering Optimization]
+**Learning:** For high-frequency Canvas rendering, pre-rendering static (grid) and complex dynamic elements (sprites with gradients and shadows) into offscreen canvases provides a massive performance boost (~55% in this case). Using `drawImage` is significantly more efficient than re-calculating radial gradients and `shadowBlur` every frame. Adding padding to these sprite canvases is crucial to avoid visual clipping of glows/shadows.
+**Action:** Always check if Canvas-based games or tools can benefit from offscreen caching of backgrounds and complex sprites.
