@@ -323,6 +323,122 @@
         let speedBoost = false;
         let speedBoostTimer = 0;
 
+        // --- Performance Optimizations ---
+        // Pre-render static background and frequently drawn objects to offscreen canvases
+        let gridCanvas = null;
+        let headSprite = null;
+        let bodySprite = null;
+        let foodSprite = null;
+        let speedPowerUpSprite = null;
+        let scorePowerUpSprite = null;
+        let obstacleSprite = null;
+        // Cache game container for particle effect performance
+        let gameContainer = null;
+
+        function createOffscreenCanvas(width, height) {
+            const offscreen = document.createElement('canvas');
+            offscreen.width = width;
+            offscreen.height = height;
+            return offscreen;
+        }
+
+        function initSprites() {
+            // Cache game container
+            gameContainer = document.querySelector('.game-container');
+
+            // 1. Grid Background
+            gridCanvas = createOffscreenCanvas(canvas.width, canvas.height);
+            const gridCtx = gridCanvas.getContext('2d');
+            gridCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            gridCtx.lineWidth = 1;
+            for (let i = 0; i <= tileCount; i++) {
+                gridCtx.beginPath();
+                gridCtx.moveTo(i * gridSize, 0);
+                gridCtx.lineTo(i * gridSize, canvas.height);
+                gridCtx.stroke();
+
+                gridCtx.beginPath();
+                gridCtx.moveTo(0, i * gridSize);
+                gridCtx.lineTo(canvas.width, i * gridSize);
+                gridCtx.stroke();
+            }
+
+            // 2. Snake Head Sprite
+            headSprite = createOffscreenCanvas(gridSize, gridSize);
+            const headCtx = headSprite.getContext('2d');
+            const headGrad = headCtx.createRadialGradient(gridSize/2, gridSize/2, 0, gridSize/2, gridSize/2, gridSize/2);
+            headGrad.addColorStop(0, '#ff6b6b');
+            headGrad.addColorStop(1, '#ee5a52');
+            headCtx.fillStyle = headGrad;
+            headCtx.fillRect(2, 2, gridSize - 4, gridSize - 4);
+            headCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            headCtx.lineWidth = 2;
+            headCtx.strokeRect(2, 2, gridSize - 4, gridSize - 4);
+
+            // 3. Snake Body Sprite
+            bodySprite = createOffscreenCanvas(gridSize, gridSize);
+            const bodyCtx = bodySprite.getContext('2d');
+            const bodyGrad = bodyCtx.createRadialGradient(gridSize/2, gridSize/2, 0, gridSize/2, gridSize/2, gridSize/2);
+            bodyGrad.addColorStop(0, '#4ecdc4');
+            bodyGrad.addColorStop(1, '#44a08d');
+            bodyCtx.fillStyle = bodyGrad;
+            bodyCtx.fillRect(2, 2, gridSize - 4, gridSize - 4);
+            bodyCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            bodyCtx.lineWidth = 2;
+            bodyCtx.strokeRect(2, 2, gridSize - 4, gridSize - 4);
+
+            // 4. Food Sprite
+            foodSprite = createOffscreenCanvas(gridSize + 20, gridSize + 20); // Extra space for shadowBlur
+            const foodCtx = foodSprite.getContext('2d');
+            const foodGrad = foodCtx.createRadialGradient((gridSize+20)/2, (gridSize+20)/2, 0, (gridSize+20)/2, (gridSize+20)/2, gridSize/2);
+            foodGrad.addColorStop(0, '#ffd700');
+            foodGrad.addColorStop(1, '#ffb347');
+            foodCtx.fillStyle = foodGrad;
+            foodCtx.shadowColor = '#ffd700';
+            foodCtx.shadowBlur = 10;
+            foodCtx.beginPath();
+            foodCtx.arc((gridSize+20)/2, (gridSize+20)/2, gridSize/2 - 2, 0, 2 * Math.PI);
+            foodCtx.fill();
+
+            // 5. Speed Power-Up Sprite
+            speedPowerUpSprite = createOffscreenCanvas(gridSize + 20, gridSize + 20);
+            const speedCtx = speedPowerUpSprite.getContext('2d');
+            const speedGrad = speedCtx.createRadialGradient((gridSize+20)/2, (gridSize+20)/2, 0, (gridSize+20)/2, (gridSize+20)/2, gridSize/2);
+            speedGrad.addColorStop(0, '#00ff00');
+            speedGrad.addColorStop(1, '#00cc00');
+            speedCtx.fillStyle = speedGrad;
+            speedCtx.shadowColor = '#00ff00';
+            speedCtx.shadowBlur = 15;
+            speedCtx.beginPath();
+            speedCtx.arc((gridSize+20)/2, (gridSize+20)/2, gridSize/3, 0, 2 * Math.PI);
+            speedCtx.fill();
+
+            // 6. Score Power-Up Sprite
+            scorePowerUpSprite = createOffscreenCanvas(gridSize + 20, gridSize + 20);
+            const scoreCtx = scorePowerUpSprite.getContext('2d');
+            const scoreGrad = scoreCtx.createRadialGradient((gridSize+20)/2, (gridSize+20)/2, 0, (gridSize+20)/2, (gridSize+20)/2, gridSize/2);
+            scoreGrad.addColorStop(0, '#ff00ff');
+            scoreGrad.addColorStop(1, '#cc00cc');
+            scoreCtx.fillStyle = scoreGrad;
+            scoreCtx.shadowColor = '#ff00ff';
+            scoreCtx.shadowBlur = 15;
+            scoreCtx.beginPath();
+            scoreCtx.arc((gridSize+20)/2, (gridSize+20)/2, gridSize/3, 0, 2 * Math.PI);
+            scoreCtx.fill();
+
+            // 7. Obstacle Sprite
+            obstacleSprite = createOffscreenCanvas(gridSize, gridSize);
+            const obsCtx = obstacleSprite.getContext('2d');
+            const obsGrad = obsCtx.createLinearGradient(0, 0, gridSize, gridSize);
+            obsGrad.addColorStop(0, '#8b4513');
+            obsGrad.addColorStop(1, '#654321');
+            obsCtx.fillStyle = obsGrad;
+            obsCtx.fillRect(0, 0, gridSize, gridSize);
+            obsCtx.strokeStyle = '#a0522d';
+            obsCtx.lineWidth = 2;
+            obsCtx.strokeRect(0, 0, gridSize, gridSize);
+        }
+
         // 遊戲模式設定
         const gameModes = {
             1: { name: '經典模式', speed: 150, obstacles: false, powerUps: false },
@@ -414,120 +530,34 @@
 
         // 繪制遊戲
         function drawGame() {
-            // 清空畫布
+            // Optimization: Clear and Redraw using pre-rendered offscreen canvases
+            // This avoids thousands of line draw calls and gradient computations per frame
+
+            // 清空畫布 - 這裡保持直接填充以方便背景管理
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 繪制網格
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * gridSize, 0);
-                ctx.lineTo(i * gridSize, canvas.height);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(0, i * gridSize);
-                ctx.lineTo(canvas.width, i * gridSize);
-                ctx.stroke();
-            }
+            // 繪制網格 (Pre-rendered)
+            ctx.drawImage(gridCanvas, 0, 0);
 
-            // 繪制蛇
+            // 繪制蛇 (Pre-rendered sprites)
             snake.forEach((segment, index) => {
-                const gradient = ctx.createRadialGradient(
-                    segment.x * gridSize + gridSize/2, 
-                    segment.y * gridSize + gridSize/2, 
-                    0,
-                    segment.x * gridSize + gridSize/2, 
-                    segment.y * gridSize + gridSize/2, 
-                    gridSize/2
-                );
-                
-                if (index === 0) {
-                    // 蛇頭
-                    gradient.addColorStop(0, '#ff6b6b');
-                    gradient.addColorStop(1, '#ee5a52');
-                } else {
-                    // 蛇身
-                    gradient.addColorStop(0, '#4ecdc4');
-                    gradient.addColorStop(1, '#44a08d');
-                }
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(segment.x * gridSize + 2, segment.y * gridSize + 2, gridSize - 4, gridSize - 4);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(segment.x * gridSize + 2, segment.y * gridSize + 2, gridSize - 4, gridSize - 4);
+                const sprite = (index === 0) ? headSprite : bodySprite;
+                ctx.drawImage(sprite, segment.x * gridSize, segment.y * gridSize);
             });
 
-            // 繪制食物
-            const foodGradient = ctx.createRadialGradient(
-                food.x * gridSize + gridSize/2, 
-                food.y * gridSize + gridSize/2, 
-                0,
-                food.x * gridSize + gridSize/2, 
-                food.y * gridSize + gridSize/2, 
-                gridSize/2
-            );
-            foodGradient.addColorStop(0, '#ffd700');
-            foodGradient.addColorStop(1, '#ffb347');
-            
-            ctx.fillStyle = foodGradient;
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // 食物閃爍效果
-            ctx.shadowColor = '#ffd700';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            // 繪制食物 (Pre-rendered sprite with offset to handle shadowBlur)
+            ctx.drawImage(foodSprite, food.x * gridSize - 10, food.y * gridSize - 10);
 
-            // 繪制道具
+            // 繪制道具 (Pre-rendered sprite)
             if (powerUp) {
-                const powerUpGradient = ctx.createRadialGradient(
-                    powerUp.x * gridSize + gridSize/2, 
-                    powerUp.y * gridSize + gridSize/2, 
-                    0,
-                    powerUp.x * gridSize + gridSize/2, 
-                    powerUp.y * gridSize + gridSize/2, 
-                    gridSize/2
-                );
-                
-                if (powerUp.type === 'speed') {
-                    powerUpGradient.addColorStop(0, '#00ff00');
-                    powerUpGradient.addColorStop(1, '#00cc00');
-                } else {
-                    powerUpGradient.addColorStop(0, '#ff00ff');
-                    powerUpGradient.addColorStop(1, '#cc00cc');
-                }
-                
-                ctx.fillStyle = powerUpGradient;
-                ctx.beginPath();
-                ctx.arc(powerUp.x * gridSize + gridSize/2, powerUp.y * gridSize + gridSize/2, gridSize/3, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                ctx.shadowColor = powerUp.type === 'speed' ? '#00ff00' : '#ff00ff';
-                ctx.shadowBlur = 15;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                const sprite = (powerUp.type === 'speed') ? speedPowerUpSprite : scorePowerUpSprite;
+                ctx.drawImage(sprite, powerUp.x * gridSize - 10, powerUp.y * gridSize - 10);
             }
 
-            // 繪制障礙物
+            // 繪制障礙物 (Pre-rendered sprite)
             obstacles.forEach(obstacle => {
-                const obstacleGradient = ctx.createLinearGradient(
-                    obstacle.x * gridSize, obstacle.y * gridSize,
-                    obstacle.x * gridSize + gridSize, obstacle.y * gridSize + gridSize
-                );
-                obstacleGradient.addColorStop(0, '#8b4513');
-                obstacleGradient.addColorStop(1, '#654321');
-                
-                ctx.fillStyle = obstacleGradient;
-                ctx.fillRect(obstacle.x * gridSize, obstacle.y * gridSize, gridSize, gridSize);
-                ctx.strokeStyle = '#a0522d';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(obstacle.x * gridSize, obstacle.y * gridSize, gridSize, gridSize);
+                ctx.drawImage(obstacleSprite, obstacle.x * gridSize, obstacle.y * gridSize);
             });
         }
 
@@ -600,7 +630,8 @@
                 particle.style.left = x + 'px';
                 particle.style.top = y + 'px';
                 particle.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
-                document.querySelector('.game-container').appendChild(particle);
+                // Optimized: use cached gameContainer DOM reference
+                gameContainer.appendChild(particle);
                 
                 setTimeout(() => {
                     particle.remove();
@@ -696,6 +727,7 @@
         });
 
         // 初始化
+        initSprites();
         initGame();
         drawGame();
     </script>
