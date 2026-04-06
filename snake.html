@@ -303,7 +303,7 @@
 
     <script>
         const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false }); // Optimization: Disable alpha for main canvas
         const gridSize = 20;
         const tileCount = canvas.width / gridSize;
 
@@ -322,6 +322,129 @@
         let obstacles = [];
         let speedBoost = false;
         let speedBoostTimer = 0;
+
+        // Optimization: Caching offscreen canvases and DOM references
+        const gridCache = document.createElement('canvas');
+        const gridCtx = gridCache.getContext('2d');
+        const spriteCache = {
+            snakeHead: document.createElement('canvas'),
+            snakeBody: document.createElement('canvas'),
+            food: document.createElement('canvas'),
+            powerUpSpeed: document.createElement('canvas'),
+            powerUpScore: document.createElement('canvas'),
+            obstacle: document.createElement('canvas')
+        };
+        const gameContainer = document.querySelector('.game-container');
+
+        // Initialize sprite sizes
+        [gridCache, ...Object.values(spriteCache)].forEach(canv => {
+            canv.width = gridSize;
+            canv.height = gridSize;
+        });
+        gridCache.width = canvas.width;
+        gridCache.height = canvas.height;
+
+        /**
+         * Optimization: Pre-render static components into offscreen canvases (sprites).
+         * This replaces expensive per-frame operations like gradients and shadowBlur with simple drawImage calls.
+         */
+        function preRenderSprites() {
+            // 1. Grid Background
+            gridCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            gridCtx.fillRect(0, 0, gridCache.width, gridCache.height);
+            gridCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            gridCtx.lineWidth = 1;
+            for (let i = 0; i <= tileCount; i++) {
+                gridCtx.beginPath();
+                gridCtx.moveTo(i * gridSize, 0);
+                gridCtx.lineTo(i * gridSize, gridCache.height);
+                gridCtx.stroke();
+                gridCtx.beginPath();
+                gridCtx.moveTo(0, i * gridSize);
+                gridCtx.lineTo(gridCache.width, i * gridSize);
+                gridCtx.stroke();
+            }
+
+            // Helper to center drawing in sprite
+            const center = gridSize / 2;
+
+            // 2. Snake Head
+            const headCtx = spriteCache.snakeHead.getContext('2d');
+            const headGrad = headCtx.createRadialGradient(center, center, 0, center, center, center);
+            headGrad.addColorStop(0, '#ff6b6b');
+            headGrad.addColorStop(1, '#ee5a52');
+            headCtx.fillStyle = headGrad;
+            headCtx.fillRect(2, 2, gridSize - 4, gridSize - 4);
+            headCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            headCtx.lineWidth = 2;
+            headCtx.strokeRect(2, 2, gridSize - 4, gridSize - 4);
+
+            // 3. Snake Body
+            const bodyCtx = spriteCache.snakeBody.getContext('2d');
+            const bodyGrad = bodyCtx.createRadialGradient(center, center, 0, center, center, center);
+            bodyGrad.addColorStop(0, '#4ecdc4');
+            bodyGrad.addColorStop(1, '#44a08d');
+            bodyCtx.fillStyle = bodyGrad;
+            bodyCtx.fillRect(2, 2, gridSize - 4, gridSize - 4);
+            bodyCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            bodyCtx.lineWidth = 2;
+            bodyCtx.strokeRect(2, 2, gridSize - 4, gridSize - 4);
+
+            // 4. Food (with padded canvas for shadow)
+            spriteCache.food.width = gridSize * 2;
+            spriteCache.food.height = gridSize * 2;
+            const fCtx = spriteCache.food.getContext('2d');
+            const fCenter = gridSize;
+            const fGrad = fCtx.createRadialGradient(fCenter, fCenter, 0, fCenter, fCenter, center);
+            fGrad.addColorStop(0, '#ffd700');
+            fGrad.addColorStop(1, '#ffb347');
+            fCtx.shadowColor = '#ffd700';
+            fCtx.shadowBlur = 10;
+            fCtx.fillStyle = fGrad;
+            fCtx.beginPath();
+            fCtx.arc(fCenter, fCenter, center - 2, 0, 2 * Math.PI);
+            fCtx.fill();
+
+            // 5. PowerUp Speed
+            spriteCache.powerUpSpeed.width = gridSize * 2;
+            spriteCache.powerUpSpeed.height = gridSize * 2;
+            const psCtx = spriteCache.powerUpSpeed.getContext('2d');
+            const psGrad = psCtx.createRadialGradient(fCenter, fCenter, 0, fCenter, fCenter, center);
+            psGrad.addColorStop(0, '#00ff00');
+            psGrad.addColorStop(1, '#00cc00');
+            psCtx.shadowColor = '#00ff00';
+            psCtx.shadowBlur = 15;
+            psCtx.fillStyle = psGrad;
+            psCtx.beginPath();
+            psCtx.arc(fCenter, fCenter, gridSize / 3, 0, 2 * Math.PI);
+            psCtx.fill();
+
+            // 6. PowerUp Score
+            spriteCache.powerUpScore.width = gridSize * 2;
+            spriteCache.powerUpScore.height = gridSize * 2;
+            const pscCtx = spriteCache.powerUpScore.getContext('2d');
+            const pscGrad = pscCtx.createRadialGradient(fCenter, fCenter, 0, fCenter, fCenter, center);
+            pscGrad.addColorStop(0, '#ff00ff');
+            pscGrad.addColorStop(1, '#cc00cc');
+            pscCtx.shadowColor = '#ff00ff';
+            pscCtx.shadowBlur = 15;
+            pscCtx.fillStyle = pscGrad;
+            pscCtx.beginPath();
+            pscCtx.arc(fCenter, fCenter, gridSize / 3, 0, 2 * Math.PI);
+            pscCtx.fill();
+
+            // 7. Obstacle
+            const oCtx = spriteCache.obstacle.getContext('2d');
+            const oGrad = oCtx.createLinearGradient(0, 0, gridSize, gridSize);
+            oGrad.addColorStop(0, '#8b4513');
+            oGrad.addColorStop(1, '#654321');
+            oCtx.fillStyle = oGrad;
+            oCtx.fillRect(0, 0, gridSize, gridSize);
+            oCtx.strokeStyle = '#a0522d';
+            oCtx.lineWidth = 2;
+            oCtx.strokeRect(0, 0, gridSize, gridSize);
+        }
+        preRenderSprites();
 
         // 遊戲模式設定
         const gameModes = {
@@ -414,120 +537,31 @@
 
         // 繪制遊戲
         function drawGame() {
-            // 清空畫布
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 繪制網格
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * gridSize, 0);
-                ctx.lineTo(i * gridSize, canvas.height);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(0, i * gridSize);
-                ctx.lineTo(canvas.width, i * gridSize);
-                ctx.stroke();
-            }
+            // Optimization: Use cached grid background
+            ctx.drawImage(gridCache, 0, 0);
 
             // 繪制蛇
+            // Optimization: Use pre-rendered sprites for head and body
             snake.forEach((segment, index) => {
-                const gradient = ctx.createRadialGradient(
-                    segment.x * gridSize + gridSize/2, 
-                    segment.y * gridSize + gridSize/2, 
-                    0,
-                    segment.x * gridSize + gridSize/2, 
-                    segment.y * gridSize + gridSize/2, 
-                    gridSize/2
-                );
-                
-                if (index === 0) {
-                    // 蛇頭
-                    gradient.addColorStop(0, '#ff6b6b');
-                    gradient.addColorStop(1, '#ee5a52');
-                } else {
-                    // 蛇身
-                    gradient.addColorStop(0, '#4ecdc4');
-                    gradient.addColorStop(1, '#44a08d');
-                }
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(segment.x * gridSize + 2, segment.y * gridSize + 2, gridSize - 4, gridSize - 4);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(segment.x * gridSize + 2, segment.y * gridSize + 2, gridSize - 4, gridSize - 4);
+                const sprite = index === 0 ? spriteCache.snakeHead : spriteCache.snakeBody;
+                ctx.drawImage(sprite, segment.x * gridSize, segment.y * gridSize);
             });
 
             // 繪制食物
-            const foodGradient = ctx.createRadialGradient(
-                food.x * gridSize + gridSize/2, 
-                food.y * gridSize + gridSize/2, 
-                0,
-                food.x * gridSize + gridSize/2, 
-                food.y * gridSize + gridSize/2, 
-                gridSize/2
-            );
-            foodGradient.addColorStop(0, '#ffd700');
-            foodGradient.addColorStop(1, '#ffb347');
-            
-            ctx.fillStyle = foodGradient;
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // 食物閃爍效果
-            ctx.shadowColor = '#ffd700';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            // Optimization: Use pre-rendered food sprite (centered due to shadow padding)
+            ctx.drawImage(spriteCache.food, food.x * gridSize - gridSize/2, food.y * gridSize - gridSize/2);
 
             // 繪制道具
             if (powerUp) {
-                const powerUpGradient = ctx.createRadialGradient(
-                    powerUp.x * gridSize + gridSize/2, 
-                    powerUp.y * gridSize + gridSize/2, 
-                    0,
-                    powerUp.x * gridSize + gridSize/2, 
-                    powerUp.y * gridSize + gridSize/2, 
-                    gridSize/2
-                );
-                
-                if (powerUp.type === 'speed') {
-                    powerUpGradient.addColorStop(0, '#00ff00');
-                    powerUpGradient.addColorStop(1, '#00cc00');
-                } else {
-                    powerUpGradient.addColorStop(0, '#ff00ff');
-                    powerUpGradient.addColorStop(1, '#cc00cc');
-                }
-                
-                ctx.fillStyle = powerUpGradient;
-                ctx.beginPath();
-                ctx.arc(powerUp.x * gridSize + gridSize/2, powerUp.y * gridSize + gridSize/2, gridSize/3, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                ctx.shadowColor = powerUp.type === 'speed' ? '#00ff00' : '#ff00ff';
-                ctx.shadowBlur = 15;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                // Optimization: Use pre-rendered power-up sprites
+                const sprite = powerUp.type === 'speed' ? spriteCache.powerUpSpeed : spriteCache.powerUpScore;
+                ctx.drawImage(sprite, powerUp.x * gridSize - gridSize/2, powerUp.y * gridSize - gridSize/2);
             }
 
             // 繪制障礙物
+            // Optimization: Use pre-rendered obstacle sprite
             obstacles.forEach(obstacle => {
-                const obstacleGradient = ctx.createLinearGradient(
-                    obstacle.x * gridSize, obstacle.y * gridSize,
-                    obstacle.x * gridSize + gridSize, obstacle.y * gridSize + gridSize
-                );
-                obstacleGradient.addColorStop(0, '#8b4513');
-                obstacleGradient.addColorStop(1, '#654321');
-                
-                ctx.fillStyle = obstacleGradient;
-                ctx.fillRect(obstacle.x * gridSize, obstacle.y * gridSize, gridSize, gridSize);
-                ctx.strokeStyle = '#a0522d';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(obstacle.x * gridSize, obstacle.y * gridSize, gridSize, gridSize);
+                ctx.drawImage(spriteCache.obstacle, obstacle.x * gridSize, obstacle.y * gridSize);
             });
         }
 
@@ -600,7 +634,8 @@
                 particle.style.left = x + 'px';
                 particle.style.top = y + 'px';
                 particle.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
-                document.querySelector('.game-container').appendChild(particle);
+                // Optimization: Use cached gameContainer reference
+                gameContainer.appendChild(particle);
                 
                 setTimeout(() => {
                     particle.remove();
