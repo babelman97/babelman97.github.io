@@ -626,68 +626,64 @@
             }
         };
 
+        // 靜態配置物件，避免在函數調用時重複創建
+        const CHINESE_HOURS_EAST_WEST = {
+            23: ["子時 (23:00-00:59) - 夜半", 1],
+            0: ["子時 (23:00-00:59) - 夜半", 1],
+            1: ["丑時 (01:00-02:59) - 雞鳴", 2],
+            2: ["丑時 (01:00-02:59) - 雞鳴", 2],
+            3: ["寅時 (03:00-04:59) - 平旦", 3],
+            4: ["寅時 (03:00-04:59) - 平旦", 3],
+            5: ["卯時 (05:00-06:59) - 日出", 4],
+            6: ["卯時 (05:00-06:59) - 日出", 4],
+            7: ["辰時 (07:00-08:59) - 食時", 5],
+            8: ["辰時 (07:00-08:59) - 食時", 5],
+            9: ["巳時 (09:00-10:59) - 隅中", 6],
+            10: ["巳時 (09:00-10:59) - 隅中", 6],
+            11: ["午時 (11:00-12:59) - 日中", 7],
+            12: ["午時 (11:00-12:59) - 日中", 7],
+            13: ["未時 (13:00-14:59) - 日昳", 8],
+            14: ["未時 (13:00-14:59) - 日昳", 8],
+            15: ["申時 (15:00-16:59) - 哺時", 9],
+            16: ["申時 (15:00-16:59) - 哺時", 9],
+            17: ["酉時 (17:00-18:59) - 日入", 10],
+            18: ["酉時 (17:00-18:59) - 日入", 10],
+            19: ["戌時 (19:00-20:59) - 黃昏", 11],
+            20: ["戌時 (19:00-20:59) - 黃昏", 11],
+            21: ["亥時 (21:00-22:59) - 人定", 12],
+            22: ["亥時 (21:00-22:59) - 人定", 12]
+        };
+
+        const CHINESE_HOURS_NORTH_SOUTH = {
+            0: ["子時 (00:00-01:59) - 夜半", 1],
+            1: ["子時 (00:00-01:59) - 夜半", 1],
+            2: ["丑時 (02:00-03:59) - 雞鳴", 2],
+            3: ["丑時 (02:00-03:59) - 雞鳴", 2],
+            4: ["寅時 (04:00-05:59) - 平旦", 3],
+            5: ["寅時 (04:00-05:59) - 平旦", 3],
+            6: ["卯時 (06:00-07:59) - 日出", 4],
+            7: ["卯時 (06:00-07:59) - 日出", 4],
+            8: ["辰時 (08:00-09:59) - 食時", 5],
+            9: ["辰時 (08:00-09:59) - 食時", 5],
+            10: ["巳時 (10:00-11:59) - 隅中", 6],
+            11: ["巳時 (10:00-11:59) - 隅中", 6],
+            12: ["午時 (12:00-13:59) - 日中", 7],
+            13: ["午時 (12:00-13:59) - 日中", 7],
+            14: ["未時 (14:00-15:59) - 日昳", 8],
+            15: ["未時 (14:00-15:59) - 日昳", 8],
+            16: ["申時 (16:00-17:59) - 哺時", 9],
+            17: ["申時 (16:00-17:59) - 哺時", 9],
+            18: ["酉時 (18:00-19:59) - 日入", 10],
+            19: ["酉時 (18:00-19:59) - 日入", 10],
+            20: ["戌時 (20:00-21:59) - 黃昏", 11],
+            21: ["戌時 (20:00-21:59) - 黃昏", 11],
+            22: ["亥時 (22:00-23:59) - 人定", 12],
+            23: ["亥時 (22:00-23:59) - 人定", 12]
+        };
+
         // 獲取時辰信息
         function getChineseTimeInfo(hour, timeZone = "東岸及西岸時間") {
-            let chineseHours;
-            
-            if (timeZone === "東岸及西岸時間") {
-                // 東岸及西岸時間的地支時辰對照表
-                chineseHours = {
-                    23: ["子時 (23:00-00:59) - 夜半", 1],
-                    0: ["子時 (23:00-00:59) - 夜半", 1],
-                    1: ["丑時 (01:00-02:59) - 雞鳴", 2],
-                    2: ["丑時 (01:00-02:59) - 雞鳴", 2],
-                    3: ["寅時 (03:00-04:59) - 平旦", 3],
-                    4: ["寅時 (03:00-04:59) - 平旦", 3],
-                    5: ["卯時 (05:00-06:59) - 日出", 4],
-                    6: ["卯時 (05:00-06:59) - 日出", 4],
-                    7: ["辰時 (07:00-08:59) - 食時", 5],
-                    8: ["辰時 (07:00-08:59) - 食時", 5],
-                    9: ["巳時 (09:00-10:59) - 隅中", 6],
-                    10: ["巳時 (09:00-10:59) - 隅中", 6],
-                    11: ["午時 (11:00-12:59) - 日中", 7],
-                    12: ["午時 (11:00-12:59) - 日中", 7],
-                    13: ["未時 (13:00-14:59) - 日昳", 8],
-                    14: ["未時 (13:00-14:59) - 日昳", 8],
-                    15: ["申時 (15:00-16:59) - 哺時", 9],
-                    16: ["申時 (15:00-16:59) - 哺時", 9],
-                    17: ["酉時 (17:00-18:59) - 日入", 10],
-                    18: ["酉時 (17:00-18:59) - 日入", 10],
-                    19: ["戌時 (19:00-20:59) - 黃昏", 11],
-                    20: ["戌時 (19:00-20:59) - 黃昏", 11],
-                    21: ["亥時 (21:00-22:59) - 人定", 12],
-                    22: ["亥時 (21:00-22:59) - 人定", 12]
-                };
-            } else {
-                // 北岸及南岸時間的地支時辰對照表
-                chineseHours = {
-                    0: ["子時 (00:00-01:59) - 夜半", 1],
-                    1: ["子時 (00:00-01:59) - 夜半", 1],
-                    2: ["丑時 (02:00-03:59) - 雞鳴", 2],
-                    3: ["丑時 (02:00-03:59) - 雞鳴", 2],
-                    4: ["寅時 (04:00-05:59) - 平旦", 3],
-                    5: ["寅時 (04:00-05:59) - 平旦", 3],
-                    6: ["卯時 (06:00-07:59) - 日出", 4],
-                    7: ["卯時 (06:00-07:59) - 日出", 4],
-                    8: ["辰時 (08:00-09:59) - 食時", 5],
-                    9: ["辰時 (08:00-09:59) - 食時", 5],
-                    10: ["巳時 (10:00-11:59) - 隅中", 6],
-                    11: ["巳時 (10:00-11:59) - 隅中", 6],
-                    12: ["午時 (12:00-13:59) - 日中", 7],
-                    13: ["午時 (12:00-13:59) - 日中", 7],
-                    14: ["未時 (14:00-15:59) - 日昳", 8],
-                    15: ["未時 (14:00-15:59) - 日昳", 8],
-                    16: ["申時 (16:00-17:59) - 哺時", 9],
-                    17: ["申時 (16:00-17:59) - 哺時", 9],
-                    18: ["酉時 (18:00-19:59) - 日入", 10],
-                    19: ["酉時 (18:00-19:59) - 日入", 10],
-                    20: ["戌時 (20:00-21:59) - 黃昏", 11],
-                    21: ["戌時 (20:00-21:59) - 黃昏", 11],
-                    22: ["亥時 (22:00-23:59) - 人定", 12],
-                    23: ["亥時 (22:00-23:59) - 人定", 12]
-                };
-            }
-            
+            const chineseHours = timeZone === "東岸及西岸時間" ? CHINESE_HOURS_EAST_WEST : CHINESE_HOURS_NORTH_SOUTH;
             return chineseHours[hour] || ["未知時辰", 0];
         }
 
@@ -723,9 +719,30 @@
             return divinationResults[remainder] || "未知";
         }
 
+        // 快取 DOM 元素
+        const elements = {};
+        function cacheElements() {
+            const ids = [
+                'timezone-select', 'calculation-type', 'calculate-btn', 'timezone-display',
+                'current-time', 'lunar-date', 'lunar-month', 'lunar-day',
+                'calculation-type-display', 'current-time-branch', 'time-branch-number',
+                'xiaoluiren-number', 'divination-result', 'time-branch-table'
+            ];
+            ids.forEach(id => {
+                elements[id] = document.getElementById(id);
+            });
+        }
+
         // 生成時辰對照表
+        let lastCalculationType = null;
         function generateTimeBranchTable(calculationType) {
-            const table = document.getElementById('time-branch-table');
+            // 如果計算方式沒變，則不需要重新生成表格
+            if (lastCalculationType === calculationType) {
+                return;
+            }
+            lastCalculationType = calculationType;
+
+            const table = elements['time-branch-table'];
             // 清空表格內容，保留表頭
             while (table.rows.length > 1) {
                 table.deleteRow(1);
@@ -745,27 +762,31 @@
             }
             
             // 填充表格內容
+            const fragment = document.createDocumentFragment();
             for (let hour = 0; hour < 24; hour++) {
                 const [timeDesc, hourCount] = getChineseTimeInfo(hour, calculationType);
                 
-                const row = table.insertRow();
-                const cell1 = row.insertCell(0);
-                const cell2 = row.insertCell(1);
-                const cell3 = row.insertCell(2);
+                const row = document.createElement('tr');
+                const cell1 = document.createElement('td');
+                const cell2 = document.createElement('td');
+                const cell3 = document.createElement('td');
                 
                 cell1.textContent = `${hour.toString().padStart(2, '0')}:00 - ${hour.toString().padStart(2, '0')}:59`;
                 cell2.textContent = timeDesc;
                 cell3.textContent = hourCount;
+
+                row.appendChild(cell1);
+                row.appendChild(cell2);
+                row.appendChild(cell3);
+                fragment.appendChild(row);
             }
+            table.appendChild(fragment);
         }
 
         // 計算並顯示結果
         function calculateResults() {
-            const timezoneSelect = document.getElementById('timezone-select');
-            const calculationTypeSelect = document.getElementById('calculation-type');
-            
-            const selectedTimezone = timezoneSelect.value;
-            const selectedCalculationType = calculationTypeSelect.value;
+            const selectedTimezone = elements['timezone-select'].value;
+            const selectedCalculationType = elements['calculation-type'].value;
             
             // 獲取指定時區的時間
             const now = getTimezoneTime(selectedTimezone);
@@ -787,26 +808,26 @@
             const divinationResult = getXiaoluirenResult(xiaoluirenNum);
             
             // 更新頁面顯示
-            document.getElementById('timezone-display').textContent = `${selectedTimezone} (GMT${now.toString().match(/GMT([+-]\d+)/)[1]})`;
-            document.getElementById('current-time').textContent = now.toLocaleString();
-            document.getElementById('lunar-date').textContent = `${lunarDateStr} (農曆${lunarDate.lunarYear}年${lunarDate.isLeap ? '閏' : ''}${lunarDate.lunarMonth}月${lunarDate.lunarDay}日)`;
-            document.getElementById('lunar-month').textContent = chineseMonth;
-            document.getElementById('lunar-day').textContent = chineseDay;
-            document.getElementById('calculation-type-display').textContent = selectedCalculationType;
-            document.getElementById('current-time-branch').textContent = currentTimeDesc;
-            document.getElementById('time-branch-number').textContent = chineseHoursCount;
-            document.getElementById('xiaoluiren-number').textContent = xiaoluirenNum;
-            document.getElementById('divination-result').textContent = `占卜結果：${divinationResult}`;
+            elements['timezone-display'].textContent = `${selectedTimezone} (GMT${now.toString().match(/GMT([+-]\d+)/)[1]})`;
+            elements['current-time'].textContent = now.toLocaleString();
+            elements['lunar-date'].textContent = `${lunarDateStr} (農曆${lunarDate.lunarYear}年${lunarDate.isLeap ? '閏' : ''}${lunarDate.lunarMonth}月${lunarDate.lunarDay}日)`;
+            elements['lunar-month'].textContent = chineseMonth;
+            elements['lunar-day'].textContent = chineseDay;
+            elements['calculation-type-display'].textContent = selectedCalculationType;
+            elements['current-time-branch'].textContent = currentTimeDesc;
+            elements['time-branch-number'].textContent = chineseHoursCount;
+            elements['xiaoluiren-number'].textContent = xiaoluirenNum;
+            elements['divination-result'].textContent = `占卜結果：${divinationResult}`;
             
             // 生成時辰對照表
             generateTimeBranchTable(selectedCalculationType);
         }
 
-        // 綁定按鈕點擊事件
-        document.getElementById('calculate-btn').addEventListener('click', calculateResults);
-        
         // 頁面加載時自動計算一次
         window.onload = function() {
+            cacheElements();
+            // 綁定按鈕點擊事件
+            elements['calculate-btn'].addEventListener('click', calculateResults);
             calculateResults();
         };
     </script>
