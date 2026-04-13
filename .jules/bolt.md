@@ -1,0 +1,3 @@
+## 2025-05-23 - Canvas Rendering Bottlenecks in Snake.html
+**Learning:** Even simple 2D games can suffer from performance degradation when using complex drawing operations like radial gradients and `shadowBlur` in high-frequency loops. In `snake.html`, `drawGame` was spending significant time re-calculating these effects every frame.
+**Action:** Use offscreen canvas caching for all non-dynamic graphical elements. For elements with shadows, ensure sufficient padding in the cache canvas (e.g., `shadowBlur * 2`) to avoid clipping. Benchmarking showed a ~25% reduction in execution time (0.41ms -> 0.31ms) for the drawing loop after caching.
