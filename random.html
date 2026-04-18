@@ -48,23 +48,61 @@
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * Generates unique random numbers within a specified range.
+         * Optimization: Uses an "exclusion" strategy when the requested count is a large
+         * fraction of the total range to avoid the performance degradation of
+         * rejection sampling (high collision rates in Set.add).
+         */
         function generateRandomNumbers() {
             let minValue = parseInt(document.getElementById('minValue').value);
             let maxValue = parseInt(document.getElementById('maxValue').value);
             let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+            let n = maxValue - minValue + 1;
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > n) {
                 document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            let result;
+            // If requested count is more than 2/3 of the total range,
+            // it's faster to pick numbers to exclude.
+            if (count > (n * 2) / 3) {
+                let excludeCount = n - count;
+                let excluded = new Set();
+                while (excluded.size < excludeCount) {
+                    let randomNumber = Math.floor(Math.random() * n) + minValue;
+                    excluded.add(randomNumber);
+                }
+
+                result = new Array(count);
+                let j = 0;
+                for (let i = 0; i < n; i++) {
+                    let val = i + minValue;
+                    if (!excluded.has(val)) {
+                        result[j++] = val;
+                    }
+                }
+
+                // Fisher-Yates shuffle to ensure random distribution
+                for (let i = result.length - 1; i > 0; i--) {
+                    let j = Math.floor(Math.random() * (i + 1));
+                    let temp = result[i];
+                    result[i] = result[j];
+                    result[j] = temp;
+                }
+            } else {
+                // Standard rejection sampling for low/medium density
+                let randomNumbers = new Set();
+                while (randomNumbers.size < count) {
+                    let randomNumber = Math.floor(Math.random() * n) + minValue;
+                    randomNumbers.add(randomNumber);
+                }
+                result = Array.from(randomNumbers);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            document.getElementById('randomNumbers').innerText = result.join(', ');
         }
     </script>
 </body>
