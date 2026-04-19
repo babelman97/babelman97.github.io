@@ -103,6 +103,15 @@
 <script>
     const { createApp, ref, computed, onMounted, watch } = Vue;
 
+    // Singleton AudioContext to avoid initialization overhead and browser limits
+    let globalAudioCtx = null;
+    const getAudioContext = () => {
+        if (!globalAudioCtx) {
+            globalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        return globalAudioCtx;
+    };
+
     createApp({
         setup() {
             const counters = ref([]);
@@ -152,7 +161,7 @@
 
             const handleSound = (item) => {
                 if (item.sound === 'tick') {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const ctx = getAudioContext();
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     osc.connect(gain);
