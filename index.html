@@ -481,26 +481,31 @@
         }
 
         // 時間工具
+        // 性能優化：預先緩存 DOM 引用和 Intl.DateTimeFormat 實例
+        let cachedTimeDiv, cachedTimeZonesDiv;
+        const timeFormatters = {
+            twTime: new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true }),
+            twDate: new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }),
+            tokyoTime: new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: 'numeric', minute: 'numeric', second: 'numeric' }),
+            nyTime: new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', second: 'numeric' }),
+            londonTime: new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: 'numeric', minute: 'numeric', second: 'numeric' })
+        };
+
         function updateTime() {
             const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
+            if (!cachedTimeDiv) cachedTimeDiv = document.getElementById('currentTime');
+            if (!cachedTimeZonesDiv) cachedTimeZonesDiv = document.getElementById('timeZones');
             
-            timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
+            cachedTimeDiv.innerHTML = `
+                <div class="temp">${timeFormatters.twTime.format(now)}</div>
+                <div>${timeFormatters.twDate.format(now)}</div>
             `;
             
-            timeZonesDiv.innerHTML = `
+            cachedTimeZonesDiv.innerHTML = `
                 <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
+                    東京: ${timeFormatters.tokyoTime.format(now)}<br>
+                    紐約: ${timeFormatters.nyTime.format(now)}<br>
+                    倫敦: ${timeFormatters.londonTime.format(now)}
                 </small>
             `;
         }
