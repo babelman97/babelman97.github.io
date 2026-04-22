@@ -1,0 +1,3 @@
+## 2025-05-15 - Canvas Sprite Pre-rendering with shadowBlur
+**Learning:** `shadowBlur` and `shadowColor` are extremely expensive in the HTML5 Canvas `drawGame` loop. Caching these effects in offscreen canvases requires careful padding (e.g., 10-20px) to prevent the glow from being clipped at the sprite boundaries. Additionally, when using `{ alpha: false }` for the main context, ensuring the background sprite is fully opaque (e.g., `#000000`) is critical for visual consistency.
+**Action:** Always pre-render complex paths, gradients, and shadows into offscreen canvases. Use a padding constant for sprites with shadows and a centering offset during `drawImage`.
