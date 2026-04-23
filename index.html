@@ -480,27 +480,36 @@
             resultDiv.style.display = 'block';
         }
 
-        // 時間工具
+        // 時間工具 - 效能優化：快取 Intl.DateTimeFormat 實例與 DOM 參考
+        const timeFormatter = new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        const dateFormatter = new Intl.DateTimeFormat('zh-TW', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'
+        });
+        const tokyoFormatter = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        const nyFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        const londonFormatter = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+
+        let timeDivRef, timeZonesDivRef;
+
         function updateTime() {
             const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
+            if (!timeDivRef) timeDivRef = document.getElementById('currentTime');
+            if (!timeZonesDivRef) timeZonesDivRef = document.getElementById('timeZones');
             
-            timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
+            // 使用 format() 替代 toLocaleString() 可避免重複建立格式化物件
+            timeDivRef.innerHTML = `
+                <div class="temp">${timeFormatter.format(now)}</div>
+                <div>${dateFormatter.format(now)}</div>
             `;
             
-            timeZonesDiv.innerHTML = `
+            timeZonesDivRef.innerHTML = `
                 <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
+                    東京: ${tokyoFormatter.format(now)}<br>
+                    紐約: ${nyFormatter.format(now)}<br>
+                    倫敦: ${londonFormatter.format(now)}
                 </small>
             `;
         }
