@@ -323,6 +323,127 @@
         let speedBoost = false;
         let speedBoostTimer = 0;
 
+        // 預渲染快取
+        const spriteCache = {
+            grid: null,
+            head: null,
+            body: null,
+            food: null,
+            powerUpSpeed: null,
+            powerUpScore: null,
+            obstacle: null
+        };
+
+        function initSprites() {
+            // 1. 預渲染網格背景
+            spriteCache.grid = document.createElement('canvas');
+            spriteCache.grid.width = canvas.width;
+            spriteCache.grid.height = canvas.height;
+            const gCtx = spriteCache.grid.getContext('2d');
+
+            gCtx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            gCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+            gCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            gCtx.lineWidth = 1;
+            for (let i = 0; i <= tileCount; i++) {
+                gCtx.beginPath();
+                gCtx.moveTo(i * gridSize, 0);
+                gCtx.lineTo(i * gridSize, canvas.height);
+                gCtx.stroke();
+
+                gCtx.beginPath();
+                gCtx.moveTo(0, i * gridSize);
+                gCtx.lineTo(canvas.width, i * gridSize);
+                gCtx.stroke();
+            }
+
+            // 輔助函數：創建精靈畫布
+            const createSprite = (size = gridSize) => {
+                const c = document.createElement('canvas');
+                c.width = size;
+                c.height = size;
+                return [c, c.getContext('2d')];
+            };
+
+            // 2. 蛇頭
+            const [headCanvas, hCtx] = createSprite();
+            const headGrad = hCtx.createRadialGradient(gridSize/2, gridSize/2, 0, gridSize/2, gridSize/2, gridSize/2);
+            headGrad.addColorStop(0, '#ff6b6b');
+            headGrad.addColorStop(1, '#ee5a52');
+            hCtx.fillStyle = headGrad;
+            hCtx.fillRect(2, 2, gridSize - 4, gridSize - 4);
+            hCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            hCtx.lineWidth = 2;
+            hCtx.strokeRect(2, 2, gridSize - 4, gridSize - 4);
+            spriteCache.head = headCanvas;
+
+            // 3. 蛇身
+            const [bodyCanvas, bCtx] = createSprite();
+            const bodyGrad = bCtx.createRadialGradient(gridSize/2, gridSize/2, 0, gridSize/2, gridSize/2, gridSize/2);
+            bodyGrad.addColorStop(0, '#4ecdc4');
+            bodyGrad.addColorStop(1, '#44a08d');
+            bCtx.fillStyle = bodyGrad;
+            bCtx.fillRect(2, 2, gridSize - 4, gridSize - 4);
+            bCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            bCtx.lineWidth = 2;
+            bCtx.strokeRect(2, 2, gridSize - 4, gridSize - 4);
+            spriteCache.body = bodyCanvas;
+
+            // 4. 食物 (包含發光效果，需要稍微大一點的畫布來容納 shadowBlur)
+            const padding = 10;
+            const [foodCanvas, fCtx] = createSprite(gridSize + padding * 2);
+            const fCenter = gridSize/2 + padding;
+            const foodGrad = fCtx.createRadialGradient(fCenter, fCenter, 0, fCenter, fCenter, gridSize/2);
+            foodGrad.addColorStop(0, '#ffd700');
+            foodGrad.addColorStop(1, '#ffb347');
+            fCtx.shadowColor = '#ffd700';
+            fCtx.shadowBlur = 10;
+            fCtx.fillStyle = foodGrad;
+            fCtx.beginPath();
+            fCtx.arc(fCenter, fCenter, gridSize/2 - 2, 0, 2 * Math.PI);
+            fCtx.fill();
+            spriteCache.food = foodCanvas;
+
+            // 5. 道具 (速度)
+            const [pSpeedCanvas, psCtx] = createSprite(gridSize + padding * 2);
+            const psGrad = psCtx.createRadialGradient(fCenter, fCenter, 0, fCenter, fCenter, gridSize/2);
+            psGrad.addColorStop(0, '#00ff00');
+            psGrad.addColorStop(1, '#00cc00');
+            psCtx.shadowColor = '#00ff00';
+            psCtx.shadowBlur = 15;
+            psCtx.fillStyle = psGrad;
+            psCtx.beginPath();
+            psCtx.arc(fCenter, fCenter, gridSize/3, 0, 2 * Math.PI);
+            psCtx.fill();
+            spriteCache.powerUpSpeed = pSpeedCanvas;
+
+            // 6. 道具 (分數)
+            const [pScoreCanvas, pscCtx] = createSprite(gridSize + padding * 2);
+            const pscGrad = pscCtx.createRadialGradient(fCenter, fCenter, 0, fCenter, fCenter, gridSize/2);
+            pscGrad.addColorStop(0, '#ff00ff');
+            pscGrad.addColorStop(1, '#cc00cc');
+            pscCtx.shadowColor = '#ff00ff';
+            pscCtx.shadowBlur = 15;
+            pscCtx.fillStyle = pscGrad;
+            pscCtx.beginPath();
+            pscCtx.arc(fCenter, fCenter, gridSize/3, 0, 2 * Math.PI);
+            pscCtx.fill();
+            spriteCache.powerUpScore = pScoreCanvas;
+
+            // 7. 障礙物
+            const [obsCanvas, oCtx] = createSprite();
+            const obsGrad = oCtx.createLinearGradient(0, 0, gridSize, gridSize);
+            obsGrad.addColorStop(0, '#8b4513');
+            obsGrad.addColorStop(1, '#654321');
+            oCtx.fillStyle = obsGrad;
+            oCtx.fillRect(0, 0, gridSize, gridSize);
+            oCtx.strokeStyle = '#a0522d';
+            oCtx.lineWidth = 2;
+            oCtx.strokeRect(0, 0, gridSize, gridSize);
+            spriteCache.obstacle = obsCanvas;
+        }
+
         // 遊戲模式設定
         const gameModes = {
             1: { name: '經典模式', speed: 150, obstacles: false, powerUps: false },
@@ -414,120 +535,28 @@
 
         // 繪制遊戲
         function drawGame() {
-            // 清空畫布
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // 繪制網格
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            for (let i = 0; i <= tileCount; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * gridSize, 0);
-                ctx.lineTo(i * gridSize, canvas.height);
-                ctx.stroke();
-                
-                ctx.beginPath();
-                ctx.moveTo(0, i * gridSize);
-                ctx.lineTo(canvas.width, i * gridSize);
-                ctx.stroke();
-            }
+            // 1. 繪制預渲染的背景網格
+            ctx.drawImage(spriteCache.grid, 0, 0);
 
-            // 繪制蛇
+            // 2. 繪制蛇
             snake.forEach((segment, index) => {
-                const gradient = ctx.createRadialGradient(
-                    segment.x * gridSize + gridSize/2, 
-                    segment.y * gridSize + gridSize/2, 
-                    0,
-                    segment.x * gridSize + gridSize/2, 
-                    segment.y * gridSize + gridSize/2, 
-                    gridSize/2
-                );
-                
-                if (index === 0) {
-                    // 蛇頭
-                    gradient.addColorStop(0, '#ff6b6b');
-                    gradient.addColorStop(1, '#ee5a52');
-                } else {
-                    // 蛇身
-                    gradient.addColorStop(0, '#4ecdc4');
-                    gradient.addColorStop(1, '#44a08d');
-                }
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(segment.x * gridSize + 2, segment.y * gridSize + 2, gridSize - 4, gridSize - 4);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(segment.x * gridSize + 2, segment.y * gridSize + 2, gridSize - 4, gridSize - 4);
+                const sprite = index === 0 ? spriteCache.head : spriteCache.body;
+                ctx.drawImage(sprite, segment.x * gridSize, segment.y * gridSize);
             });
 
-            // 繪制食物
-            const foodGradient = ctx.createRadialGradient(
-                food.x * gridSize + gridSize/2, 
-                food.y * gridSize + gridSize/2, 
-                0,
-                food.x * gridSize + gridSize/2, 
-                food.y * gridSize + gridSize/2, 
-                gridSize/2
-            );
-            foodGradient.addColorStop(0, '#ffd700');
-            foodGradient.addColorStop(1, '#ffb347');
-            
-            ctx.fillStyle = foodGradient;
-            ctx.beginPath();
-            ctx.arc(food.x * gridSize + gridSize/2, food.y * gridSize + gridSize/2, gridSize/2 - 2, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            // 食物閃爍效果
-            ctx.shadowColor = '#ffd700';
-            ctx.shadowBlur = 10;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            // 3. 繪制食物 (注意 padding 偏移)
+            const padding = 10;
+            ctx.drawImage(spriteCache.food, food.x * gridSize - padding, food.y * gridSize - padding);
 
-            // 繪制道具
+            // 4. 繪制道具 (注意 padding 偏移)
             if (powerUp) {
-                const powerUpGradient = ctx.createRadialGradient(
-                    powerUp.x * gridSize + gridSize/2, 
-                    powerUp.y * gridSize + gridSize/2, 
-                    0,
-                    powerUp.x * gridSize + gridSize/2, 
-                    powerUp.y * gridSize + gridSize/2, 
-                    gridSize/2
-                );
-                
-                if (powerUp.type === 'speed') {
-                    powerUpGradient.addColorStop(0, '#00ff00');
-                    powerUpGradient.addColorStop(1, '#00cc00');
-                } else {
-                    powerUpGradient.addColorStop(0, '#ff00ff');
-                    powerUpGradient.addColorStop(1, '#cc00cc');
-                }
-                
-                ctx.fillStyle = powerUpGradient;
-                ctx.beginPath();
-                ctx.arc(powerUp.x * gridSize + gridSize/2, powerUp.y * gridSize + gridSize/2, gridSize/3, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                ctx.shadowColor = powerUp.type === 'speed' ? '#00ff00' : '#ff00ff';
-                ctx.shadowBlur = 15;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                const sprite = powerUp.type === 'speed' ? spriteCache.powerUpSpeed : spriteCache.powerUpScore;
+                ctx.drawImage(sprite, powerUp.x * gridSize - padding, powerUp.y * gridSize - padding);
             }
 
-            // 繪制障礙物
+            // 5. 繪制障礙物
             obstacles.forEach(obstacle => {
-                const obstacleGradient = ctx.createLinearGradient(
-                    obstacle.x * gridSize, obstacle.y * gridSize,
-                    obstacle.x * gridSize + gridSize, obstacle.y * gridSize + gridSize
-                );
-                obstacleGradient.addColorStop(0, '#8b4513');
-                obstacleGradient.addColorStop(1, '#654321');
-                
-                ctx.fillStyle = obstacleGradient;
-                ctx.fillRect(obstacle.x * gridSize, obstacle.y * gridSize, gridSize, gridSize);
-                ctx.strokeStyle = '#a0522d';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(obstacle.x * gridSize, obstacle.y * gridSize, gridSize, gridSize);
+                ctx.drawImage(spriteCache.obstacle, obstacle.x * gridSize, obstacle.y * gridSize);
             });
         }
 
@@ -696,6 +725,7 @@
         });
 
         // 初始化
+        initSprites();
         initGame();
         drawGame();
     </script>

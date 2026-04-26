@@ -481,26 +481,28 @@
         }
 
         // 時間工具
+        // 快取 Intl.DateTimeFormat 實例和 DOM 元素以優化效能
+        const timeDiv = document.getElementById('currentTime');
+        const timeZonesDiv = document.getElementById('timeZones');
+        const formatterTWTime = new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
+        const formatterTWDate = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+        const formatterJP = new Intl.DateTimeFormat('ja-JP', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Asia/Tokyo' });
+        const formatterNY = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'America/New_York' });
+        const formatterLD = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Europe/London' });
+
         function updateTime() {
             const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
             
             timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
+                <div class="temp">${formatterTWTime.format(now)}</div>
+                <div>${formatterTWDate.format(now)}</div>
             `;
             
             timeZonesDiv.innerHTML = `
                 <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
+                    東京: ${formatterJP.format(now)}<br>
+                    紐約: ${formatterNY.format(now)}<br>
+                    倫敦: ${formatterLD.format(now)}
                 </small>
             `;
         }
