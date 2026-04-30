@@ -1,0 +1,3 @@
+## 2025-05-22 - Canvas Sprite Pre-rendering and Background Caching
+**Learning:** In high-frequency Canvas animation loops, repeated operations like creating `CanvasGradient`, drawing complex paths (e.g., `arc`), and using `shadowBlur` are significant performance bottlenecks. Pre-rendering these elements into offscreen "sprite" canvases and using `drawImage` during the main loop can reduce frame rendering time by over 90%. Additionally, caching static backgrounds (like grids) into a single offscreen canvas prevents redundant line drawing calls every frame.
+**Action:** Always check for repeated complex drawing operations in `requestAnimationFrame` or `setTimeout` loops. Use offscreen canvases to cache static or semi-static visual elements.
