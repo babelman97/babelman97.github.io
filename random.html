@@ -52,19 +52,41 @@
             let minValue = parseInt(document.getElementById('minValue').value);
             let maxValue = parseInt(document.getElementById('maxValue').value);
             let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            let results = [];
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+            const range = maxValue - minValue + 1;
+
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > range) {
                 document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            // Performance Optimization: Hybrid strategy for unique random selection
+            // Use exclusion strategy if count is more than 50% of the range to avoid "coupon collector's problem"
+            if (count > range / 2) {
+                // Initialize full range
+                let allNumbers = Array.from({ length: range }, (_, i) => minValue + i);
+                let toRemove = range - count;
+                // Randomly remove elements until we have the desired count
+                while (toRemove > 0) {
+                    const idx = Math.floor(Math.random() * allNumbers.length);
+                    // O(1) removal: swap with last element and pop
+                    allNumbers[idx] = allNumbers[allNumbers.length - 1];
+                    allNumbers.pop();
+                    toRemove--;
+                }
+                results = allNumbers;
+            } else {
+                // Rejection sampling for sparse requests
+                let randomSet = new Set();
+                while (randomSet.size < count) {
+                    let randomNumber = Math.floor(Math.random() * range) + minValue;
+                    randomSet.add(randomNumber);
+                }
+                results = Array.from(randomSet);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            document.getElementById('randomNumbers').innerText = results.join(', ');
         }
     </script>
 </body>
