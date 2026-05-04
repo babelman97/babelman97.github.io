@@ -1,0 +1,3 @@
+## 2024-12-04 - Canvas Rendering Optimization via Sprite Caching
+**Learning:** Per-frame creation of radial/linear gradients, `shadowBlur` effects, and nested grid drawing loops in HTML5 Canvas creates significant CPU/GPU overhead, especially as the number of game objects (like snake segments) increases. Pre-rendering these elements once into offscreen canvases ("sprites") and using `ctx.drawImage` in the main loop drastically reduces frame time.
+**Action:** When optimizing Canvas applications, profile the rendering loop for expensive drawing commands. Migrate static or semi-static game elements to a sprite caching system. Remember to add padding to the offscreen canvases to account for effects like shadows that extend beyond the object's base dimensions.
