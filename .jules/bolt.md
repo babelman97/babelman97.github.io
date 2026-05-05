@@ -1,0 +1,3 @@
+## 2025-01-24 - Canvas Sprite Caching and Background Clearing
+**Learning:** When using an off-screen canvas to cache a static background (like a game grid) in a project that clears the frame by redrawing the background, ensure the background color is filled within the off-screen sprite canvas. Moving the background fill to an `else` block (skipping it when cache is hit) causes "smearing" artifacts because previous frames are never cleared. Additionally, cached sprites with `shadowBlur` require explicit padding to avoid visual clipping.
+**Action:** Include the background fill in the cached background sprite and use `{ alpha: false }` for opaque contexts. Standardize `SPRITE_PADDING` for all glow-heavy sprites.
