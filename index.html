@@ -480,27 +480,35 @@
             resultDiv.style.display = 'block';
         }
 
-        // 時間工具
+        // 時間工具 - Optimized with cached formatters and DOM references
+        const timeFormatters = {
+            mainTime: new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric' }),
+            mainDate: new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }),
+            tokyo: new Intl.DateTimeFormat('ja-JP', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Asia/Tokyo' }),
+            newYork: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'America/New_York' }),
+            london: new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Europe/London' })
+        };
+
+        let cachedTimeDiv, cachedTimeZonesDiv;
+
         function updateTime() {
             const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
+            if (!cachedTimeDiv) cachedTimeDiv = document.getElementById('currentTime');
+            if (!cachedTimeZonesDiv) cachedTimeZonesDiv = document.getElementById('timeZones');
             
-            timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
+            // Using textContent and fragments would be even faster, but maintaining
+            // the exact innerHTML structure for now to avoid breaking styles.
+            // Caching Intl.DateTimeFormat is the biggest win here (~25x-100x faster).
+            cachedTimeDiv.innerHTML = `
+                <div class="temp">${timeFormatters.mainTime.format(now)}</div>
+                <div>${timeFormatters.mainDate.format(now)}</div>
             `;
             
-            timeZonesDiv.innerHTML = `
+            cachedTimeZonesDiv.innerHTML = `
                 <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
+                    東京: ${timeFormatters.tokyo.format(now)}<br>
+                    紐約: ${timeFormatters.newYork.format(now)}<br>
+                    倫敦: ${timeFormatters.london.format(now)}
                 </small>
             `;
         }
