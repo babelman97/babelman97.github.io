@@ -1,0 +1,3 @@
+## 2026-05-07 - AudioContext Singleton Pattern
+**Learning:** In static tool applications like `go.html` and `getagoal.html`, creating a new `AudioContext` on every user interaction (e.g., button click for sound feedback) is extremely inefficient and can quickly hit browser limits on the number of active contexts. Instantiation is heavy (~5.6ms per context in benchmarks), while reuse is nearly instantaneous (<0.01ms).
+**Action:** Always implement a singleton pattern for `AudioContext` in tools requiring sound effects. Initialize the context lazily within a user gesture handler to comply with autoplay policies, and store it in a global or persistent variable for reuse.
