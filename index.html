@@ -480,27 +480,50 @@
             resultDiv.style.display = 'block';
         }
 
-        // 時間工具
+        // 時間工具 - 效能優化版
+        const timeFormatters = {
+            twTime: new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric' }),
+            twDate: new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }),
+            tokyo: new Intl.DateTimeFormat('ja-JP', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Asia/Tokyo' }),
+            newYork: new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'America/New_York' }),
+            london: new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Europe/London' })
+        };
+
+        let lastDateString = '';
+        let timeDivElement = null;
+        let timeZonesDivElement = null;
+
         function updateTime() {
             const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
             
-            timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
-            `;
+            // 延遲初始化 DOM 引用
+            if (!timeDivElement) timeDivElement = document.getElementById('currentTime');
+            if (!timeZonesDivElement) timeZonesDivElement = document.getElementById('timeZones');
+
+            if (!timeDivElement || !timeZonesDivElement) return;
+
+            const timeStr = timeFormatters.twTime.format(now);
+            const dateStr = timeFormatters.twDate.format(now);
+
+            // 髒檢查：只有日期改變時才更新日期部分的 HTML
+            if (dateStr !== lastDateString) {
+                timeDivElement.innerHTML = `
+                    <div class="temp">${timeStr}</div>
+                    <div>${dateStr}</div>
+                `;
+                lastDateString = dateStr;
+            } else {
+                // 僅更新時間部分（假設結構固定，這裡為了簡單還是更新了 innerHTML 的一部分，
+                // 但避免了昂貴的 dateStr 重新渲染和可能的佈局抖動）
+                const timeEl = timeDivElement.querySelector('.temp');
+                if (timeEl) timeEl.textContent = timeStr;
+            }
             
-            timeZonesDiv.innerHTML = `
+            timeZonesDivElement.innerHTML = `
                 <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
+                    東京: ${timeFormatters.tokyo.format(now)}<br>
+                    紐約: ${timeFormatters.newYork.format(now)}<br>
+                    倫敦: ${timeFormatters.london.format(now)}
                 </small>
             `;
         }
