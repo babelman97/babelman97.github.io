@@ -1,0 +1,3 @@
+## 2025-05-15 - Optimizing Unique Random Selection
+**Learning:** Rejection sampling for unique random values (using a Set) suffers from the "Coupon Collector's Problem" when the requested count is a large fraction of the total range. Collisions become exponentially more frequent, leading to a performance collapse from O(N) to O(N log N) or worse.
+**Action:** Use a hybrid sampling strategy. For sparse requests (e.g., count <= 50% of range), rejection sampling is memory-efficient and fast. For dense requests, use exclusion-based sampling (like a partial Fisher-Yates shuffle) to guarantee O(N) performance regardless of collision probability. Be cautious with typed arrays (like Int32Array) if the values might exceed 31-bit limits.
