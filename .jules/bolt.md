@@ -1,0 +1,3 @@
+## 2025-05-15 - Hybrid Sampling for Unique Random Numbers
+**Learning:** Rejection sampling using a `Set` for unique random numbers suffers from the 'Coupon Collector's Problem' as the requested count approaches the total range size. This causes a catastrophic performance collapse (exponential increase in collisions).
+**Action:** Implement hybrid sampling. Switch from rejection sampling to exclusion-based sampling (generate a set of numbers to skip) when the requested count exceeds 50% of the total range. Follow with a Fisher-Yates shuffle to preserve random order. This avoids the collision bottleneck while maintaining O(N) complexity.
