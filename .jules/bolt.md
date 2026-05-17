@@ -1,0 +1,3 @@
+## 2025-05-14 - Optimization of Unique Random Selection (The Coupon Collector's Problem)
+**Learning:** Rejection sampling using a `Set` to ensure uniqueness suffers from a performance collapse as the requested count approaches the total range size. This is a manifestation of the 'Coupon Collector's Problem', where the probability of hitting a new unique value becomes extremely low, leading to millions of redundant iterations and browser hangs.
+**Action:** Implement a hybrid strategy: use rejection sampling for sparse requests (density < 50%) and exclusion-based sampling (randomly selecting values to *skip*) for dense requests. Always follow with a Fisher-Yates shuffle to maintain random output order if the sampling method generates values in a deterministic sequence.
