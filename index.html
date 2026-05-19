@@ -480,30 +480,39 @@
             resultDiv.style.display = 'block';
         }
 
-        // 時間工具
-        function updateTime() {
-            const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
-            
-            timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
-            `;
-            
-            timeZonesDiv.innerHTML = `
-                <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
-                </small>
-            `;
-        }
+        // 時間工具 - 效能優化：使用閉包快取格式化器與 DOM 元素
+        const updateTime = (function() {
+            const timeFormatterTW = new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+            const dateFormatterTW = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+            const timeFormatterJP = new Intl.DateTimeFormat('ja-JP', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Asia/Tokyo' });
+            const timeFormatterUS = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'America/New_York' });
+            const timeFormatterGB = new Intl.DateTimeFormat('en-GB', { hour: 'numeric', minute: 'numeric', second: 'numeric', timeZone: 'Europe/London' });
+
+            let timeDivCache, timeZonesDivCache;
+
+            return function() {
+                const now = new Date();
+                if (!timeDivCache) timeDivCache = document.getElementById('currentTime');
+                if (!timeZonesDivCache) timeZonesDivCache = document.getElementById('timeZones');
+
+                if (timeDivCache) {
+                    timeDivCache.innerHTML = `
+                        <div class="temp">${timeFormatterTW.format(now)}</div>
+                        <div>${dateFormatterTW.format(now)}</div>
+                    `;
+                }
+
+                if (timeZonesDivCache) {
+                    timeZonesDivCache.innerHTML = `
+                        <small>
+                            東京: ${timeFormatterJP.format(now)}<br>
+                            紐約: ${timeFormatterUS.format(now)}<br>
+                            倫敦: ${timeFormatterGB.format(now)}
+                        </small>
+                    `;
+                }
+            };
+        })();
 
         // 實用函數
         function hexToRgb(hex) {
