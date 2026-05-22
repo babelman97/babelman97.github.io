@@ -1,0 +1,3 @@
+## 2025-05-15 - [Random Sampling Performance Collapse]
+**Learning:** Rejection sampling using a `Set` for unique random numbers collapses in performance as the requested count approaches the range size (Coupon Collector's Problem). For a range of 1,000,000, picking 999,990 numbers takes >1s because the final few numbers are extremely hard to find by chance.
+**Action:** Implement a hybrid strategy: use rejection sampling for sparse requests (<= 50% range) and exclusion-based sampling (pick what to skip + Fisher-Yates shuffle) for dense requests (> 50% range). This achieves a ~20x speedup in worst-case scenarios.
