@@ -1,0 +1,3 @@
+## 2025-05-15 - [High-Density Random Sampling Bottleneck]
+**Learning:** In `random.html`, using rejection sampling (a `while` loop with a `Set`) for generating unique random numbers causes a performance collapse when the requested count is a large fraction of the total range (the "Coupon Collector's Problem"). Baseline measurement: 9.0143s to generate 999,990 numbers out of 1,000,000.
+**Action:** Implement a hybrid strategy: use rejection sampling for low-density requests (< 50% of range) and Fisher-Yates shuffle (on the full range or an exclusion list) for high-density requests to ensure predictable O(N) performance.
