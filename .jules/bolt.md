@@ -1,0 +1,3 @@
+## 2025-05-24 - Hybrid Sampling Strategy for Random Numbers
+**Learning:** Rejection sampling using a `Set` is efficient for sparse requests but suffers from the "Coupon Collector's Problem" as the requested count approaches the range size, leading to exponential performance degradation.
+**Action:** Implement a hybrid strategy: use rejection sampling for low density (<50%) and Fisher-Yates shuffle for high density (>50%) to ensure deterministic O(N) performance. Always include CSS `max-height` and `overflow` for components that might render massive amounts of data in the DOM to prevent UI hang.
