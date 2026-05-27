@@ -10,9 +10,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .button {
             padding: 20px 40px;
@@ -24,10 +26,18 @@
             color: white;
             border-radius: 10px;
         }
-        .number {
+        #randomNumbers {
             font-size: 36px;
             color: #333;
             margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            word-wrap: break-word;
+            width: 80%;
+            padding: 10px;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
         }
         .input-field {
             margin: 10px 0;
@@ -49,22 +59,51 @@
 
     <script>
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minEl = document.getElementById('minValue');
+            const maxEl = document.getElementById('maxValue');
+            const countEl = document.getElementById('count');
+            const resultEl = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            let minValue = parseInt(minEl.value);
+            let maxValue = parseInt(maxEl.value);
+            let count = parseInt(countEl.value);
+
+            const range = maxValue - minValue + 1;
+
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > range) {
+                resultEl.textContent = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            let results = [];
+            // Performance Optimization: Hybrid strategy for unique random selection
+            // 1. For sparse requests (< 50% of range), use Set with rejection sampling - O(count) average
+            // 2. For dense requests (>= 50% of range), use Fisher-Yates shuffle - O(range) worst case
+            // This avoids the 'Coupon Collector's Problem' where rejection sampling becomes exponentially slow.
+            if (count / range < 0.5) {
+                let randomNumbers = new Set();
+                while (randomNumbers.size < count) {
+                    let randomNumber = Math.floor(Math.random() * range) + minValue;
+                    randomNumbers.add(randomNumber);
+                }
+                results = Array.from(randomNumbers);
+            } else {
+                // Fisher-Yates based selection for high density
+                let allNumbers = new Array(range);
+                for (let i = 0; i < range; i++) {
+                    allNumbers[i] = i + minValue;
+                }
+
+                // Partial shuffle: only shuffle up to 'count' elements
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (range - i)) + i;
+                    [allNumbers[i], allNumbers[j]] = [allNumbers[j], allNumbers[i]];
+                }
+                results = allNumbers.slice(0, count);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            // Using textContent instead of innerText for performance (avoids layout thrashing)
+            resultEl.textContent = results.join(', ');
         }
     </script>
 </body>
