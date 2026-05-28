@@ -1,0 +1,3 @@
+## 2025-05-15 - [Fisher-Yates vs Rejection Sampling for Random Sets]
+**Learning:** For unique random number generation, rejection sampling (Set-based) is efficient for sparse requests but suffers from the 'Coupon Collector's Problem' as the requested count approaches the range size. Fisher-Yates shuffle provides O(N) performance for high-density requests but carries O(Range) memory overhead.
+**Action:** Implement a hybrid strategy: use rejection sampling for low-density requests and switch to (partial) Fisher-Yates for high-density requests (>50% of range). Always cap the range for shuffle-based methods (e.g., 10M elements) to prevent memory exhaustion in browsers.
