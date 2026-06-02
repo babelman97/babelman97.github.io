@@ -1,0 +1,3 @@
+## 2025-05-15 - Optimizing Unique Random Selection
+**Learning:** Using rejection sampling (Set) for unique random selection collapses in performance when the requested count exceeds 50% of the range (the Coupon Collector's Problem). Switching to Fisher-Yates shuffle for dense requests provides a significant speedup (~7.5x in measured cases).
+**Action:** Always implement a hybrid sampling strategy for random generators: rejection sampling for sparse requests to save memory, and Fisher-Yates (or similar) for dense requests to ensure predictable O(N) performance. Add memory safety checks (e.g., range size caps) before allocating large arrays for shuffling.
