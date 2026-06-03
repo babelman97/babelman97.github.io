@@ -10,9 +10,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .button {
             padding: 20px 40px;
@@ -28,6 +30,12 @@
             font-size: 36px;
             color: #333;
             margin-top: 10px;
+            max-height: 50vh;
+            overflow-y: auto;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            word-wrap: break-word;
         }
         .input-field {
             margin: 10px 0;
@@ -49,22 +57,49 @@
 
     <script>
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minValue = parseInt(document.getElementById('minValue').value);
+            const maxValue = parseInt(document.getElementById('maxValue').value);
+            const count = parseInt(document.getElementById('count').value);
+            const resultDisplay = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            // ⚡ Bolt: Corrected range validation to allow single-value ranges (e.g., 5-5)
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+                resultDisplay.textContent = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            const rangeSize = maxValue - minValue + 1;
+            let results = [];
+
+            // ⚡ Bolt Performance Optimization:
+            // Use hybrid sampling strategy to avoid the 'Coupon Collector's Problem' performance collapse.
+            // For high-density requests (>50% of range), use Fisher-Yates shuffle.
+            // For sparse requests, maintain rejection sampling (Set).
+            // Memory safe-guard: Fisher-Yates array allocation capped at 10M elements.
+            if (count > rangeSize / 2 && rangeSize <= 10000000) {
+                // Fisher-Yates strategy for high density
+                const pool = new Array(rangeSize);
+                for (let i = 0; i < rangeSize; i++) {
+                    pool[i] = minValue + i;
+                }
+
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (rangeSize - i)) + i;
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+                results = pool.slice(0, count);
+            } else {
+                // Rejection sampling for sparse or extremely large ranges
+                const randomNumbers = new Set();
+                while (randomNumbers.size < count) {
+                    const randomNumber = Math.floor(Math.random() * rangeSize) + minValue;
+                    randomNumbers.add(randomNumber);
+                }
+                results = Array.from(randomNumbers);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            // ⚡ Bolt: Use textContent for faster DOM updates compared to innerText/innerHTML
+            resultDisplay.textContent = results.join(', ');
         }
     </script>
 </body>
