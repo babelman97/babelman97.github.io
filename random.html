@@ -10,9 +10,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .button {
             padding: 20px 40px;
@@ -23,11 +25,23 @@
             background-color: #4CAF50;
             color: white;
             border-radius: 10px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #45a049;
         }
         .number {
-            font-size: 36px;
+            font-size: 1.2rem;
             color: #333;
-            margin-top: 10px;
+            margin-top: 20px;
+            max-width: 800px;
+            max-height: 50vh;
+            overflow-y: auto;
+            word-break: break-all;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .input-field {
             margin: 10px 0;
@@ -49,22 +63,51 @@
 
     <script>
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minValue = parseInt(document.getElementById('minValue').value);
+            const maxValue = parseInt(document.getElementById('maxValue').value);
+            const count = parseInt(document.getElementById('count').value);
+            const resultElement = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            // Validation: Allow minValue === maxValue if count is 1.
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+                resultElement.textContent = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            const range = maxValue - minValue + 1;
+            let result;
+
+            // Optimization: If count is more than 50% of the range and range is reasonable (< 10M),
+            // use a hybrid approach to avoid the Coupon Collector's Problem (rejection sampling bottleneck).
+            if (count > range / 2 && range <= 10000000) {
+                // High density: Use Fisher-Yates shuffle on a range array.
+                // This ensures O(N) complexity regardless of density.
+                const arr = new Array(range);
+                for (let i = 0; i < range; i++) {
+                    arr[i] = minValue + i;
+                }
+
+                // Partial Fisher-Yates shuffle
+                for (let i = 0; i < count; i++) {
+                    const j = i + Math.floor(Math.random() * (range - i));
+                    const temp = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+                result = arr.slice(0, count);
+            } else {
+                // Low density or extremely large range: use Set-based rejection sampling.
+                // This is memory efficient for large ranges with small counts.
+                const randomNumbers = new Set();
+                while (randomNumbers.size < count) {
+                    const randomNumber = Math.floor(Math.random() * range) + minValue;
+                    randomNumbers.add(randomNumber);
+                }
+                result = Array.from(randomNumbers);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            // Using textContent instead of innerText for faster DOM updates.
+            resultElement.textContent = result.join(', ');
         }
     </script>
 </body>
