@@ -1,0 +1,3 @@
+## 2025-06-14 - Optimized High-Density Random Sampling in random.html
+**Learning:** Rejection sampling with `Set` collapses at high density due to the Coupon Collector's Problem (probabilistic collision). While a standard Fisher-Yates shuffle on a full range `Array` provides O(N) performance, it is memory-intensive for large ranges. A **Sparse Fisher-Yates** implementation using a `Map` to track swaps in a virtual array provides guaranteed O(count) time and space complexity without large array allocation overhead.
+**Action:** Use a hybrid sampling strategy (Rejection Sampling for <50% density, Sparse Fisher-Yates for >=50% density) for unique random selection to ensure optimal performance across all use cases.

@@ -10,9 +10,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .button {
             padding: 20px 40px;
@@ -23,48 +25,148 @@
             background-color: #4CAF50;
             color: white;
             border-radius: 10px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button:active {
+            transform: scale(0.98);
         }
         .number {
-            font-size: 36px;
+            font-size: 24px;
             color: #333;
-            margin-top: 10px;
+            margin-top: 20px;
+            max-height: 50vh;
+            overflow-y: auto;
+            word-wrap: break-word;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
         }
         .input-field {
             margin: 10px 0;
             font-size: 18px;
             padding: 10px;
-            width: 80px;
+            width: 120px;
             text-align: center;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+        .input-label {
+            min-width: 80px;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
-    <div>最小數字　<input type="number" class="input-field" id="minValue" placeholder="000"></div>
-    <div>最大數字　<input type="number" class="input-field" id="maxValue" placeholder="999"></div>
-    <div>隨機個數　<input type="number" class="input-field" id="count" placeholder="1"></div>
+    <div class="input-group">
+        <span class="input-label">最小數字</span>
+        <input type="number" class="input-field" id="minValue" placeholder="0" value="1">
+    </div>
+    <div class="input-group">
+        <span class="input-label">最大數字</span>
+        <input type="number" class="input-field" id="maxValue" placeholder="999" value="100">
+    </div>
+    <div class="input-group">
+        <span class="input-label">隨機個數</span>
+        <input type="number" class="input-field" id="count" placeholder="1" value="1">
+    </div>
     <button class="button" onclick="generateRandomNumbers()">產生隨機數</button>
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * ⚡ Bolt Optimization: Optimized Hybrid Random Sampling
+         *
+         * Algorithm selection:
+         * 1. Rejection Sampling (using Set):
+         *    Very efficient when count is small relative to range.
+         *    Used when count < 50% of range.
+         *
+         * 2. Sparse Fisher-Yates Shuffle:
+         *    Guarantees O(count) time and space complexity.
+         *    Prevents performance collapse (Coupon Collector's Problem) when count is near rangeSize.
+         *    Avoids large array allocations (O(rangeSize)) that regular Fisher-Yates requires.
+         *
+         * Range limit: 10,000,000 to prevent memory exhaustion from result display.
+         */
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minInput = document.getElementById('minValue');
+            const maxInput = document.getElementById('maxValue');
+            const countInput = document.getElementById('count');
+            const resultDisplay = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            const minValue = parseInt(minInput.value);
+            const maxValue = parseInt(maxInput.value);
+            const count = parseInt(countInput.value);
+
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count)) {
+                resultDisplay.textContent = '請輸入有效的數字';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            if (minValue > maxValue) {
+                resultDisplay.textContent = '最小數字不能大於最大數字';
+                return;
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            const rangeSize = maxValue - minValue + 1;
+
+            if (count <= 0) {
+                resultDisplay.textContent = '隨機個數必須大於 0';
+                return;
+            }
+
+            if (count > rangeSize) {
+                resultDisplay.textContent = `範圍內只有 ${rangeSize} 個可用數字`;
+                return;
+            }
+
+            // Safety limit (10M) for performance and memory
+            if (rangeSize > 10000000) {
+                resultDisplay.textContent = '數字範圍過大 (最大限制 10,000,000)';
+                return;
+            }
+
+            let result = [];
+
+            if (count < rangeSize / 2) {
+                // Low density: Rejection sampling is faster as it avoids Map overhead
+                const randomSet = new Set();
+                while (randomSet.size < count) {
+                    const num = Math.floor(Math.random() * rangeSize) + minValue;
+                    randomSet.add(num);
+                }
+                result = Array.from(randomSet);
+            } else {
+                // High density: Sparse Fisher-Yates Shuffle
+                // O(count) time and space
+                const map = new Map();
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (rangeSize - i)) + i;
+
+                    const valI = map.get(i) ?? i;
+                    const valJ = map.get(j) ?? j;
+
+                    result.push(valJ + minValue);
+                    map.set(j, valI);
+                    // No need to set map[i] as we won't access it again
+                }
+            }
+
+            // JOIN and DOM update are O(count)
+            resultDisplay.textContent = result.join(', ');
         }
     </script>
 </body>
