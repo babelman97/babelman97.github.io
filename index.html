@@ -334,8 +334,17 @@
                 <div class="service-description">時區轉換和時間計算</div>
                 <div class="service-content">
                     <div class="weather-info">
-                        <div id="currentTime"></div>
-                        <div id="timeZones"></div>
+                        <div id="currentTime">
+                            <div id="local-time" class="temp"></div>
+                            <div id="local-date"></div>
+                        </div>
+                        <div id="timeZones">
+                            <small>
+                                東京: <span id="tokyo-time"></span><br>
+                                紐約: <span id="ny-time"></span><br>
+                                倫敦: <span id="london-time"></span>
+                            </small>
+                        </div>
                     </div>
                     <button onclick="updateTime()">更新時間</button>
                 </div>
@@ -481,29 +490,46 @@
         }
 
         // 時間工具
-        function updateTime() {
-            const now = new Date();
-            const timeDiv = document.getElementById('currentTime');
-            const timeZonesDiv = document.getElementById('timeZones');
-            
-            timeDiv.innerHTML = `
-                <div class="temp">${now.toLocaleTimeString('zh-TW')}</div>
-                <div>${now.toLocaleDateString('zh-TW', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    weekday: 'long'
-                })}</div>
-            `;
-            
-            timeZonesDiv.innerHTML = `
-                <small>
-                    東京: ${now.toLocaleTimeString('ja-JP', {timeZone: 'Asia/Tokyo'})}<br>
-                    紐約: ${now.toLocaleTimeString('en-US', {timeZone: 'America/New_York'})}<br>
-                    倫敦: ${now.toLocaleTimeString('en-GB', {timeZone: 'Europe/London'})}
-                </small>
-            `;
-        }
+        const updateTime = (function() {
+            // 效能優化：快取 Intl.DateTimeFormat 實例和 DOM 元素引用
+            // Performance optimization: cache Intl.DateTimeFormat instances and DOM element references
+            let localTimeFmt, localDateFmt, tokyoFmt, nyFmt, londonFmt;
+            let localTimeEl, localDateEl, tokyoEl, nyEl, londonEl;
+            let lastDateStr = '';
+
+            return function() {
+                const now = new Date();
+
+                // 延遲初始化快取 (Lazy initialization of cache)
+                if (!localTimeFmt) {
+                    localTimeFmt = new Intl.DateTimeFormat('zh-TW', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+                    localDateFmt = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
+                    tokyoFmt = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+                    nyFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+                    londonFmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+
+                    localTimeEl = document.getElementById('local-time');
+                    localDateEl = document.getElementById('local-date');
+                    tokyoEl = document.getElementById('tokyo-time');
+                    nyEl = document.getElementById('ny-time');
+                    londonEl = document.getElementById('london-time');
+                }
+
+                // 更新時間 (Update time)
+                localTimeEl.textContent = localTimeFmt.format(now);
+                tokyoEl.textContent = tokyoFmt.format(now);
+                nyEl.textContent = nyFmt.format(now);
+                londonEl.textContent = londonFmt.format(now);
+
+                // Dirty-checking: 只有當日期改變時才更新日期 DOM
+                // Dirty-checking: only update date DOM when the date actually changes
+                const currentDateStr = now.toDateString();
+                if (currentDateStr !== lastDateStr) {
+                    localDateEl.textContent = localDateFmt.format(now);
+                    lastDateStr = currentDateStr;
+                }
+            };
+        })();
 
         // 實用函數
         function hexToRgb(hex) {
