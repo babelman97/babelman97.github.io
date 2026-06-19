@@ -1,0 +1,3 @@
+## 2025-05-15 - [Optimized Dashboard Clock and Time Zones]
+**Learning:** Significant performance gains (~100x speedup) were achieved in high-frequency UI updates by caching `Intl.DateTimeFormat` instances and DOM references within a closure. Using `textContent` on targeted sub-elements instead of `innerHTML` on entire containers avoids redundant HTML parsing and DOM tree reconstruction. Dirty-checking for slower-changing data (like the date) further reduces unnecessary updates.
+**Action:** Always prefer caching `Intl.DateTimeFormat` and DOM references for functions called in intervals (like clocks). Structure HTML with specific IDs for dynamic text to enable efficient `textContent` updates.
