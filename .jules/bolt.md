@@ -1,0 +1,3 @@
+## 2025-05-22 - [Optimizing Unique Random Sampling]
+**Learning:** Rejection sampling for unique random numbers collapses at high density (O(N²+)) due to the Coupon Collector's Problem. A hybrid approach using Sparse Fisher-Yates (Map-based) for high density ensures O(count) performance. However, even with fast logic (~400ms for 1M numbers), massive DOM string insertions remain a bottleneck (~6s) for the browser.
+**Action:** Use hybrid sampling strategies for unique selection. When dealing with large output sets, also implement CSS optimizations (overflow, max-height) and consider batching or virtualizing DOM updates if possible.
