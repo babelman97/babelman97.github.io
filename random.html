@@ -25,9 +25,15 @@
             border-radius: 10px;
         }
         .number {
-            font-size: 36px;
+            font-size: 24px;
             color: #333;
-            margin-top: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            word-break: break-all;
+            padding: 10px;
+            width: 80%;
+            text-align: center;
         }
         .input-field {
             margin: 10px 0;
@@ -48,23 +54,52 @@
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * Optimized unique random sampling.
+         * For low density (< 50%), uses rejection sampling (Set).
+         * For high density (>= 50%), uses Sparse Fisher-Yates (Map).
+         * Performance: O(count) time and space.
+         */
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minValue = parseInt(document.getElementById('minValue').value);
+            const maxValue = parseInt(document.getElementById('maxValue').value);
+            const count = parseInt(document.getElementById('count').value);
+            const output = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            const range = maxValue - minValue + 1;
+
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > range) {
+                output.innerText = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            let results = [];
+
+            // Optimization: If density is high, use Sparse Fisher-Yates to avoid collision overhead
+            // Threshold of 50% is a heuristic for when rejection sampling slows down significantly
+            if (count / range >= 0.5 && range <= 10000000) {
+                // Sparse Fisher-Yates shuffle algorithm
+                const map = new Map();
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (range - i)) + i;
+                    const valI = map.has(i) ? map.get(i) : i;
+                    const valJ = map.has(j) ? map.get(j) : j;
+
+                    results.push(valJ + minValue);
+                    map.set(j, valI);
+                    // No need to set map(i) as we won't access it again
+                }
+            } else {
+                // Rejection sampling (Set) is faster for low density
+                const randomSet = new Set();
+                while (randomSet.size < count) {
+                    const num = Math.floor(Math.random() * range) + minValue;
+                    randomSet.add(num);
+                }
+                results = Array.from(randomSet);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            output.innerText = results.join(', ');
         }
     </script>
 </body>
