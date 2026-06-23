@@ -10,9 +10,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+            margin: 0;
         }
         .button {
             padding: 20px 40px;
@@ -28,6 +31,12 @@
             font-size: 36px;
             color: #333;
             margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            word-break: break-all;
+            padding: 10px;
+            max-width: 90%;
+            text-align: center;
         }
         .input-field {
             margin: 10px 0;
@@ -54,17 +63,40 @@
             let count = parseInt(document.getElementById('count').value);
             let randomNumbers = new Set();
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            const rangeSize = maxValue - minValue + 1;
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > rangeSize) {
+                document.getElementById('randomNumbers').textContent = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            if (rangeSize > 10000000) {
+                document.getElementById('randomNumbers').textContent = '範圍過大（最大支持 10,000,000）';
+                return;
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            let result = [];
+            // Optimization: Use Sparse Fisher-Yates for high density (>= 50%)
+            // to avoid the "Coupon Collector's Problem" performance collapse.
+            if (count > rangeSize / 2) {
+                const map = new Map();
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (rangeSize - i)) + i;
+                    const valI = map.has(i) ? map.get(i) : i;
+                    const valJ = map.has(j) ? map.get(j) : j;
+                    result.push(valJ + minValue);
+                    map.set(j, valI);
+                }
+            } else {
+                // Use rejection sampling for low density
+                const selected = new Set();
+                while (selected.size < count) {
+                    const num = Math.floor(Math.random() * rangeSize);
+                    selected.add(num + minValue);
+                }
+                result = Array.from(selected);
+            }
+
+            document.getElementById('randomNumbers').textContent = result.join(', ');
         }
     </script>
 </body>
