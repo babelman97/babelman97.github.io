@@ -1,0 +1,3 @@
+## 2025-06-24 - [Random Number Generation Optimization]
+**Learning:** Rejection sampling for unique random numbers (using a Set) collapses at high densities (count > 50% of range) due to the Coupon Collector's Problem, leading to O(N²+) complexity. A Sparse Fisher-Yates shuffle using a Map provides guaranteed O(count) time and space complexity even at 100% density.
+**Action:** Use a hybrid approach: rejection sampling for low density (< 50%) and Sparse Fisher-Yates for high density (>= 50%). Switch to `textContent` for bulk DOM updates and add CSS `overflow-y` / `word-break` to prevent UI lockup when rendering massive result sets.

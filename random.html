@@ -10,9 +10,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .button {
             padding: 20px 40px;
@@ -23,48 +25,123 @@
             background-color: #4CAF50;
             color: white;
             border-radius: 10px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #45a049;
         }
         .number {
-            font-size: 36px;
+            font-size: 18px;
             color: #333;
-            margin-top: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            word-break: break-all;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            display: none;
         }
         .input-field {
             margin: 10px 0;
             font-size: 18px;
             padding: 10px;
-            width: 80px;
+            width: 100px;
             text-align: center;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        .input-container {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .label {
+            display: inline-block;
+            width: 100px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div>最小數字　<input type="number" class="input-field" id="minValue" placeholder="000"></div>
-    <div>最大數字　<input type="number" class="input-field" id="maxValue" placeholder="999"></div>
-    <div>隨機個數　<input type="number" class="input-field" id="count" placeholder="1"></div>
+    <div class="input-container">
+        <div><span class="label">最小數字</span><input type="number" class="input-field" id="minValue" value="1"></div>
+        <div><span class="label">最大數字</span><input type="number" class="input-field" id="maxValue" value="100"></div>
+        <div><span class="label">隨機個數</span><input type="number" class="input-field" id="count" value="1"></div>
+    </div>
     <button class="button" onclick="generateRandomNumbers()">產生隨機數</button>
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * Optimization:
+         * 1. Hybrid Sampling Strategy:
+         *    - Low Density (< 50%): Rejection Sampling (Set) - O(count) in practice.
+         *    - High Density (>= 50%): Sparse Fisher-Yates Shuffle (Map) - Guaranteed O(count) time and space.
+         *    - This avoids the "Coupon Collector's Problem" where rejection sampling collisions explode.
+         * 2. DOM Performance:
+         *    - Use textContent instead of innerText to avoid layout reflows.
+         *    - CSS optimizations (overflow, max-height) to prevent UI freezing on large outputs.
+         */
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minStr = document.getElementById('minValue').value;
+            const maxStr = document.getElementById('maxValue').value;
+            const countStr = document.getElementById('count').value;
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            const minValue = parseInt(minStr);
+            const maxValue = parseInt(maxStr);
+            const count = parseInt(countStr);
+            const resultEl = document.getElementById('randomNumbers');
+
+            // Validation
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) ||
+                minValue > maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+                resultEl.textContent = '請確保輸入正確的數值範圍和數量';
+                resultEl.style.display = 'block';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            const range = maxValue - minValue + 1;
+            const density = count / range;
+            let results = [];
+
+            const start = performance.now();
+
+            if (density < 0.5) {
+                // Low density: Rejection Sampling with Set
+                const resultSet = new Set();
+                while (resultSet.size < count) {
+                    const num = Math.floor(Math.random() * range) + minValue;
+                    resultSet.add(num);
+                }
+                results = Array.from(resultSet);
+            } else {
+                // High density: Sparse Fisher-Yates Shuffle
+                // Uses a Map to track swaps in a virtual array of [minValue...maxValue]
+                const swapMap = new Map();
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (range - i)) + i;
+
+                    const valI = swapMap.has(i) ? swapMap.get(i) : i + minValue;
+                    const valJ = swapMap.has(j) ? swapMap.get(j) : j + minValue;
+
+                    results.push(valJ);
+                    swapMap.set(j, valI);
+                }
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            const end = performance.now();
+            console.log(`Generation took ${end - start}ms`);
+
+            // Use textContent for performance and show the result container
+            resultEl.textContent = results.join(', ');
+            resultEl.style.display = 'block';
         }
     </script>
 </body>
