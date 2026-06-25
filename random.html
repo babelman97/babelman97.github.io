@@ -10,9 +10,10 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            padding: 20px;
         }
         .button {
             padding: 20px 40px;
@@ -28,6 +29,12 @@
             font-size: 36px;
             color: #333;
             margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-wrap: break-word;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
         }
         .input-field {
             margin: 10px 0;
@@ -48,23 +55,50 @@
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * Optimized random number generation.
+         * Uses rejection sampling for low density and Sparse Fisher-Yates for high density.
+         * Time Complexity: O(count)
+         */
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const resultEl = document.getElementById('randomNumbers');
+            const minValue = parseInt(document.getElementById('minValue').value);
+            const maxValue = parseInt(document.getElementById('maxValue').value);
+            const count = parseInt(document.getElementById('count').value);
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            // Validation
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+                resultEl.textContent = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            const range = maxValue - minValue + 1;
+            let results = [];
+
+            // Performance threshold: 50% density
+            if (count < range / 2) {
+                // Low density: Rejection sampling using a Set
+                const seen = new Set();
+                while (seen.size < count) {
+                    const num = Math.floor(Math.random() * range) + minValue;
+                    seen.add(num);
+                }
+                results = Array.from(seen);
+            } else {
+                // High density: Sparse Fisher-Yates shuffle (O(count) time and space)
+                // Prevents performance collapse from "Coupon Collector's Problem" collisions.
+                const map = new Map();
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (range - i)) + i;
+                    const valI = map.get(i) ?? i;
+                    const valJ = map.get(j) ?? j;
+                    results.push(valJ + minValue);
+                    map.set(j, valI);
+                }
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            // Using textContent and joining in one go to minimize DOM updates
+            resultEl.textContent = results.join(', ');
         }
     </script>
 </body>
