@@ -1,0 +1,3 @@
+## 2025-06-27 - [Random Generation Optimization]
+**Learning:** Rejection sampling with a `Set` for unique random numbers collapses at high density (O(N²+)) due to collisions. A hybrid approach using Sparse Fisher-Yates (Map-based) for high density ensures O(count) logic performance. However, for large sets (e.g., 1M), DOM insertion and string joining remain the primary bottleneck (~90% of total time).
+**Action:** Use hybrid sampling for unique randoms. Cap ranges (e.g., 10M) to prevent memory issues. Prefer `textContent` and CSS `max-height` with `overflow-y: auto` for large result containers to maintain UI responsiveness.
