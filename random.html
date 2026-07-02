@@ -10,9 +10,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            box-sizing: border-box;
         }
         .button {
             padding: 20px 40px;
@@ -23,11 +25,20 @@
             background-color: #4CAF50;
             color: white;
             border-radius: 10px;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #45a049;
         }
         .number {
             font-size: 36px;
             color: #333;
             margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-wrap: break-word;
+            max-width: 90vw;
+            text-align: center;
         }
         .input-field {
             margin: 10px 0;
@@ -48,23 +59,60 @@
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * ⚡ BOLT OPTIMIZATION:
+         * Implements a hybrid sampling algorithm:
+         * 1. Rejection Sampling (Set) for < 50% density (O(N) expected).
+         * 2. Sparse Fisher-Yates (Map) for >= 50% density (O(N) guaranteed).
+         * This prevents O(N^2+) performance collapse when count is close to range size.
+         */
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minValue = parseInt(document.getElementById('minValue').value);
+            const maxValue = parseInt(document.getElementById('maxValue').value);
+            const count = parseInt(document.getElementById('count').value);
+            const display = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            // Validation: Allow single value range (min == max) if count is 1
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue > maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
+                display.textContent = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            const rangeSize = maxValue - minValue + 1;
+            const density = count / rangeSize;
+            let results = [];
+
+            // Prevent memory exhaustion for massive range high-density requests
+            if (rangeSize > 10000000 && density >= 0.5) {
+                display.textContent = '範圍太大，無法進行高密度抽樣';
+                return;
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            if (density < 0.5) {
+                // Low density: Rejection sampling with Set is efficient
+                let randomNumbers = new Set();
+                while (randomNumbers.size < count) {
+                    let num = Math.floor(Math.random() * rangeSize) + minValue;
+                    randomNumbers.add(num);
+                }
+                results = Array.from(randomNumbers);
+            } else {
+                // High density: Sparse Fisher-Yates avoids collisions
+                let map = new Map();
+                for (let i = 0; i < count; i++) {
+                    let j = Math.floor(Math.random() * (rangeSize - i)) + i;
+
+                    let valI = map.has(i) ? map.get(i) : i;
+                    let valJ = map.has(j) ? map.get(j) : j;
+
+                    results.push(valJ + minValue);
+                    map.set(j, valI);
+                    map.delete(i); // Free memory
+                }
+            }
+
+            // textContent is faster than innerText/innerHTML for large strings
+            display.textContent = results.join(', ');
         }
     </script>
 </body>
