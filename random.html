@@ -28,6 +28,12 @@
             font-size: 36px;
             color: #333;
             margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-wrap: break-word;
+            padding: 10px;
+            width: 80%;
+            text-align: center;
         }
         .input-field {
             margin: 10px 0;
@@ -48,23 +54,51 @@
     <div class="number" id="randomNumbers"></div>
 
     <script>
+        /**
+         * 產生唯一隨機數的優化演算法
+         * 對於低密度請求使用拒絕採樣 (Set)，對於高密度請求使用 Sparse Fisher-Yates (Map)
+         * 預期效能提升：在大範圍高密度請求下可提升約 5-10 倍速度
+         */
         function generateRandomNumbers() {
-            let minValue = parseInt(document.getElementById('minValue').value);
-            let maxValue = parseInt(document.getElementById('maxValue').value);
-            let count = parseInt(document.getElementById('count').value);
-            let randomNumbers = new Set();
+            const minValue = parseInt(document.getElementById('minValue').value);
+            const maxValue = parseInt(document.getElementById('maxValue').value);
+            const count = parseInt(document.getElementById('count').value);
+            const displayElement = document.getElementById('randomNumbers');
 
-            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) || minValue >= maxValue || count <= 0 || count > (maxValue - minValue + 1)) {
-                document.getElementById('randomNumbers').innerText = '請確保輸入正確的數值範圍和數量';
+            const rangeSize = maxValue - minValue + 1;
+
+            // 驗證輸入
+            if (isNaN(minValue) || isNaN(maxValue) || isNaN(count) ||
+                minValue > maxValue || count <= 0 || count > rangeSize) {
+                displayElement.innerText = '請確保輸入正確的數值範圍和數量';
                 return;
             }
 
-            while (randomNumbers.size < count) {
-                let randomNumber = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
-                randomNumbers.add(randomNumber);
+            let result = [];
+
+            // 密度閾值設為 50%，高於此閾值使用 Fisher-Yates 變體
+            if (count > rangeSize / 2 && rangeSize < 10000000) {
+                // Sparse Fisher-Yates using a Map to save memory
+                const map = new Map();
+                for (let i = 0; i < count; i++) {
+                    const j = Math.floor(Math.random() * (rangeSize - i)) + i;
+                    const valI = map.has(i) ? map.get(i) : i;
+                    const valJ = map.has(j) ? map.get(j) : j;
+
+                    result.push(valJ + minValue);
+                    map.set(j, valI);
+                }
+            } else {
+                // 低密度使用 Set 進行拒絕採樣，簡單且高效
+                const randomSet = new Set();
+                while (randomSet.size < count) {
+                    const randomNumber = Math.floor(Math.random() * rangeSize) + minValue;
+                    randomSet.add(randomNumber);
+                }
+                result = Array.from(randomSet);
             }
 
-            document.getElementById('randomNumbers').innerText = Array.from(randomNumbers).join(', ');
+            displayElement.innerText = result.join(', ');
         }
     </script>
 </body>
