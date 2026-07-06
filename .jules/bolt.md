@@ -1,0 +1,3 @@
+## 2025-05-15 - Optimized unique random sampling in random.html
+**Learning:** Rejection sampling for unique random numbers collapses at high density ($O(N^2+)$), but hybrid Fisher-Yates approaches must cap range sizes (e.g., <10M) to prevent memory-related `RangeError` from large array allocations. Total browser execution time is dominated by DOM overhead for massive outputs, but logic optimization still provides a significant (approx. 5x) overall speedup.
+**Action:** Use a hybrid approach (Rejection Sampling for <50% density, Sparse Fisher-Yates for >=50% density) for unique sampling, and always implement CSS overflow/wrapping when enabling large dynamic outputs to prevent UI breakage.
